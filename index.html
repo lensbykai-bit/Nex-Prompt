@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nex Prompt — AI Image to Video Prompt Marketplace</title>
+  <meta name="description" content="Nex Prompt — premium AI image-to-video prompts for creators." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="Nex Prompt home"><span class="brand-mark">▶</span><span>Nex <b>Prompt</b></span></a>
+    <nav class="main-nav" aria-label="Primary">
+      <a class="active" href="#home">Home</a><a href="#image-to-video">Image to Video</a><a href="#categories">Categories</a><a href="#models">Models</a><a href="#how">How it works</a><a href="#pricing">Pricing</a>
+    </nav>
+    <div class="top-actions">
+      <label class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="Search prompts..." /></label>
+      <button class="icon-btn" id="cartBtn" aria-label="Cart">🛒<span class="badge">2</span></button>
+      <button class="primary small" id="loginBtn">Login / Sign up</button>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="side-link selected" href="#home"><span>⌂</span>Home</a>
+      <p class="side-title">EXPLORE</p>
+      <a class="side-link" href="#popular"><span>▧</span>All Prompts</a>
+      <a class="side-link" href="#image-to-video"><span>▣</span>Image to Video</a>
+      <a class="side-link" href="#popular"><span>◔</span>Trending</a>
+      <a class="side-link" href="#popular"><span>☆</span>New Releases</a>
+      <a class="side-link" href="#popular"><span>★</span>Top Rated</a>
+      <p class="side-title">CATEGORIES</p>
+      <a class="side-link" href="#categories">◎ Cinematic</a><a class="side-link" href="#categories">♧ Nature</a><a class="side-link" href="#categories">⌘ Sci-Fi</a><a class="side-link" href="#categories">◉ Fantasy</a><a class="side-link" href="#categories">▱ Product Ads</a><a class="side-link" href="#categories">♤ Anime</a><a class="side-link" href="#categories">⌂ Architecture</a><a class="side-link" href="#categories">♡ Animals</a><a class="side-link" href="#categories">♨ Food</a><a class="side-link" href="#categories">◌ 3D</a><a class="side-link" href="#categories">••• More</a>
+      <p class="side-title">LIBRARY</p>
+      <a class="side-link" href="#"><span>▣</span>My Purchases</a><a class="side-link" href="#"><span>♡</span>Favorites</a><a class="side-link" href="#"><span>▢</span>Collections</a>
+      <p class="side-title">OTHERS</p>
+      <a class="side-link" href="#how"><span>?</span>How it works</a><a class="side-link" href="#"><span>♙</span>Support</a>
+      <section class="credit-card"><h3>Get 10 Free Credits</h3><p>Create an account and get 10 free credits to try premium prompts.</p><div class="credit-footer"><button class="primary tiny">Sign up now</button><div class="gift">🎁</div></div></section>
+    </aside>
+
+    <main id="home" class="content">
+      <section class="hero" id="image-to-video">
+        <div class="hero-copy">
+          <div class="eyebrow">✦ AI IMAGE TO VIDEO PROMPT MARKETPLACE</div>
+          <h1>Turn your images<br>into <span>cinematic</span><br>stories</h1>
+          <p>Premium prompts that help you generate amazing videos in seconds.</p>
+          <div class="stats"><div><strong>10K+</strong><span>Happy Creators</span></div><div><strong>50K+</strong><span>Prompts Sold</span></div><div><strong>20+</strong><span>AI Models</span></div><div><strong>4.9★</strong><span>User Rating</span></div></div>
+          <div class="hero-actions"><button class="primary" onclick="document.getElementById('popular').scrollIntoView({behavior:'smooth'})">Explore Prompts</button><button class="secondary" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">▶ How it works</button></div>
+        </div>
+        <div class="hero-gallery" aria-label="Prompt preview gallery">
+          <article class="hero-big" style="--bg:url('https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?auto=format&fit=crop&w=1200&q=85')"><button class="play" aria-label="Play preview">▶</button></article>
+          <article class="hero-mini" style="--bg:url('https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=800&q=85')"></article>
+          <article class="hero-mini" style="--bg:url('https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=800&q=85')"></article>
+          <article class="hero-mini" style="--bg:url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=85')"></article>
+          <article class="hero-mini" style="--bg:url('https://images.unsplash.com/photo-1521017432531-fbd92d768814?auto=format&fit=crop&w=800&q=85')"></article>
+          <article class="hero-mini" style="--bg:url('https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=800&q=85')"></article>
+        </div>
+      </section>
+
+      <section class="category-section" id="categories"><h2>Browse by category</h2><div class="category-row" id="categoryRow">
+        <button class="category active" data-filter="all"><span>⌘</span>All</button><button class="category" data-filter="cinematic"><span>▣</span>Cinematic</button><button class="category" data-filter="nature"><span>◇</span>Nature</button><button class="category" data-filter="fantasy"><span>♧</span>Fantasy</button><button class="category" data-filter="sci-fi"><span>◉</span>Sci-Fi</button><button class="category" data-filter="product"><span>▱</span>Product Ads</button><button class="category" data-filter="anime"><span>♤</span>Anime</button><button class="category" data-filter="architecture"><span>▥</span>Architecture</button><button class="category" data-filter="animals"><span>♡</span>Animals</button><button class="category" data-filter="food"><span>♨</span>Food</button><button class="category" data-filter="3d"><span>◇</span>3D</button><button class="category" data-filter="all"><span>•••</span>More</button>
+      </div></section>
+
+      <section id="popular" class="popular-section">
+        <div class="section-head"><h2>Popular Prompts</h2><button class="link-btn">View all prompts →</button></div>
+        <div class="prompt-grid" id="promptGrid">
+          <article class="prompt-card" data-category="cinematic" data-title="Sunset Cliff Adventure"><div class="prompt-image" style="--bg:url('https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=900&q=85')"><span class="tag">Cinematic</span><button class="heart">♡</button><span class="mini-play">▶</span></div><div class="prompt-body"><h3>Sunset Cliff Adventure</h3><div><span>@ Visionary</span><strong>$2.49</strong></div></div></article>
+          <article class="prompt-card" data-category="sci-fi" data-title="Cyberpunk Night Drive"><div class="prompt-image" style="--bg:url('https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=900&q=85')"><span class="tag">Sci-Fi</span><button class="heart">♡</button><span class="mini-play">▶</span></div><div class="prompt-body"><h3>Cyberpunk Night Drive</h3><div><span>@ NeonMaster</span><strong>$2.49</strong></div></div></article>
+          <article class="prompt-card" data-category="fantasy" data-title="Floating Castle in Clouds"><div class="prompt-image" style="--bg:url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=900&q=85')"><span class="tag">Fantasy</span><button class="heart">♡</button><span class="mini-play">▶</span></div><div class="prompt-body"><h3>Floating Castle in Clouds</h3><div><span>@ DreamCrafter</span><strong>$2.99</strong></div></div></article>
+          <article class="prompt-card" data-category="cinematic" data-title="Samurai in Red Forest"><div class="prompt-image" style="--bg:url('https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=900&q=85')"><span class="tag">Cinematic</span><button class="heart">♡</button><span class="mini-play">▶</span></div><div class="prompt-body"><h3>Samurai in Red Forest</h3><div><span>@ AI_Artist</span><strong>$2.49</strong></div></div></article>
+          <article class="prompt-card" data-category="nature" data-title="Ocean Wave Motion"><div class="prompt-image" style="--bg:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=85')"><span class="tag">Nature</span><button class="heart">♡</button><span class="mini-play">▶</span></div><div class="prompt-body"><h3>Ocean Wave Motion</h3><div><span>@ NatureLens</span><strong>$1.99</strong></div></div></article>
+          <article class="prompt-card" data-category="product" data-title="Luxury Watch Showcase"><div class="prompt-image" style="--bg:url('https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=900&q=85')"><span class="tag">Product Ads</span><button class="heart">♡</button><span class="mini-play">▶</span></div><div class="prompt-body"><h3>Luxury Watch Showcase</h3><div><span>@ AdCreator</span><strong>$2.99</strong></div></div></article>
+        </div>
+      </section>
+
+      <section class="benefits" id="models"><article><div class="benefit-icon">△</div><div><h3>High Quality Prompts</h3><p>Carefully crafted and tested for the best results</p></div></article><article><div class="benefit-icon">⌘</div><div><h3>Multiple AI Models</h3><p>Works with leading video AI models</p></div></article><article><div class="benefit-icon">▣</div><div><h3>Instant Access</h3><p>Get your prompts immediately after purchase</p></div></article><article><div class="benefit-icon">♢</div><div><h3>Secure & Safe</h3><p>Your payments and data are protected</p></div></article></section>
+      <section class="how" id="how"><div><span>01</span><h3>Choose a prompt</h3><p>Browse categories and open the prompt you want.</p></div><div><span>02</span><h3>Preview the result</h3><p>See image and video examples before you purchase.</p></div><div><span>03</span><h3>Buy & unlock</h3><p>Purchase securely to reveal the complete AI prompt.</p></div></section>
+    </main>
+  </div>
+
+  <dialog id="authDialog" class="modal"><form method="dialog"><button class="modal-close">×</button><div class="modal-logo">▶</div><h2>Welcome to Nex Prompt</h2><p>Sign in or create your account to save and purchase prompts.</p><input placeholder="Email address" type="email" required><input placeholder="Password" type="password" required><button class="primary full">Continue</button></form></dialog>
+  <script src="script.js"></script>
+</body>
+</html>
