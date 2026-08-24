@@ -1,38 +1,47 @@
-const searchInput = document.getElementById('searchInput');
-const cards = [...document.querySelectorAll('.prompt-card')];
-const categoryButtons = [...document.querySelectorAll('.category')];
-
-function applyFilters() {
-  const q = (searchInput?.value || '').trim().toLowerCase();
-  const active = document.querySelector('.category.active')?.dataset.filter || 'all';
-  cards.forEach(card => {
-    const title = (card.dataset.title || '').toLowerCase();
-    const cat = card.dataset.category || '';
-    const matchText = !q || title.includes(q) || cat.includes(q);
-    const matchCategory = active === 'all' || active === cat;
-    card.style.display = matchText && matchCategory ? '' : 'none';
-  });
-}
-
-searchInput?.addEventListener('input', applyFilters);
-categoryButtons.forEach(btn => btn.addEventListener('click', () => {
-  categoryButtons.forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  applyFilters();
-}));
-
-document.querySelectorAll('.heart').forEach(btn => {
-  btn.addEventListener('click', e => {
-    e.stopPropagation();
-    btn.classList.toggle('active');
-    btn.textContent = btn.classList.contains('active') ? '♥' : '♡';
-  });
-});
-
-const dialog = document.getElementById('authDialog');
-document.getElementById('loginBtn')?.addEventListener('click', () => dialog.showModal());
-document.getElementById('cartBtn')?.addEventListener('click', () => alert('Cart demo: 2 prompts selected.'));
-
-document.querySelectorAll('.prompt-card').forEach(card => {
-  card.addEventListener('click', () => alert(`${card.dataset.title}\n\nProduct detail page will be connected next.`));
-});
+const basePrompts=[
+{id:'p1',title:'Sunset Cliff Adventure',category:'cinematic',price:2.49,creator:'Visionary',model:'Kling / Veo',image:'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1000&q=88',prompt:'Cinematic drone push-in over a dramatic sunset cliff, warm golden-hour lighting, soft atmospheric haze, natural wind motion, subtle parallax, slow camera acceleration, realistic depth of field, 6-second shot.'},
+{id:'p2',title:'Cyberpunk Night Drive',category:'sci-fi',price:2.49,creator:'NeonMaster',model:'Runway / Kling',image:'https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=88',prompt:'Low-angle tracking shot of a futuristic sports car moving through a neon city at night, wet reflective streets, cyan and magenta signs, smooth stabilized camera, light rain, cinematic motion blur.'},
+{id:'p3',title:'Floating Castle in Clouds',category:'fantasy',price:2.99,creator:'DreamCrafter',model:'Veo / Sora',image:'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=1000&q=88',prompt:'Slow aerial orbit around a floating fantasy castle above luminous clouds, sunrise rays, drifting mist, birds in the distance, majestic scale, gentle cinematic camera movement, detailed fantasy atmosphere.'},
+{id:'p4',title:'Samurai in Red Forest',category:'cinematic',price:2.49,creator:'AI_Artist',model:'Kling / Runway',image:'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&w=1000&q=88',prompt:'A lone samurai walks slowly through a red autumn forest, leaves drifting in the air, subtle cloth motion, low-angle dolly shot, soft volumetric sunlight, calm cinematic pacing.'},
+{id:'p5',title:'Ocean Wave Motion',category:'nature',price:1.99,creator:'NatureLens',model:'Veo / Pika',image:'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=88',prompt:'A powerful ocean wave rises and curls in slow motion at golden hour, realistic foam and spray, smooth lateral camera tracking, sun reflections on water, natural physics and cinematic detail.'},
+{id:'p6',title:'Luxury Watch Showcase',category:'product',price:2.99,creator:'AdCreator',model:'Kling / Runway',image:'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=1000&q=88',prompt:'Premium black wristwatch on a dark studio pedestal, slow 180-degree product orbit, crisp specular highlights, controlled reflections, dramatic rim lighting, luxury commercial aesthetic.'},
+{id:'p7',title:'Cozy Coffee Steam',category:'food',price:1.99,creator:'FoodFrame',model:'Veo / Kling',image:'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=1000&q=88',prompt:'Close-up of a ceramic coffee cup in a cozy cafe, visible steam curling upward, slow push-in camera, warm morning window light, shallow depth of field, gentle realistic ambience.'},
+{id:'p8',title:'Forest Deer Moment',category:'animals',price:2.29,creator:'WildFrame',model:'Veo / Sora',image:'https://images.unsplash.com/photo-1484406566174-9da000fda645?auto=format&fit=crop&w=1000&q=88',prompt:'A deer stands quietly in a misty forest clearing, ears and head moving naturally, soft fog drifting between trees, slow handheld-style camera approach, realistic wildlife documentary mood.'},
+{id:'p9',title:'Modern Villa Tour',category:'architecture',price:2.69,creator:'ArchMotion',model:'Kling / Runway',image:'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1000&q=88',prompt:'Smooth cinematic walkthrough toward a modern luxury villa at dusk, warm interior lighting, reflections on glass, slow gimbal movement, realistic architectural visualization.'}
+];
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const load=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
+const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+let custom=load('nex_custom_prompts',[]),cart=load('nex_cart',[]),favorites=load('nex_favorites',[]),purchases=load('nex_purchases',[]),user=load('nex_user',null),activeFilter='all';
+const allPrompts=()=>[...basePrompts,...custom];
+function money(n){return '$'+Number(n).toFixed(2)}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+function categoryLabel(c){return {'sci-fi':'Sci-Fi',product:'Product Ads',cinematic:'Cinematic',nature:'Nature',fantasy:'Fantasy',anime:'Anime',architecture:'Architecture',animals:'Animals',food:'Food'}[c]||c}
+function renderPrompts(){const q=($('#searchInput')?.value||'').trim().toLowerCase();const grid=$('#promptGrid');grid.innerHTML='';allPrompts().filter(p=>(activeFilter==='all'||p.category===activeFilter)&&(!q||`${p.title} ${p.category} ${p.creator} ${p.model}`.toLowerCase().includes(q))).forEach(p=>{const a=document.createElement('article');a.className='prompt-card';a.dataset.id=p.id;a.innerHTML=`<div class="prompt-image" style="--bg:url('${p.image}')"><span class="tag">${categoryLabel(p.category)}</span><button class="heart ${favorites.includes(p.id)?'active':''}" data-heart="${p.id}">${favorites.includes(p.id)?'♥':'♡'}</button><span class="mini-play">▶</span></div><div class="prompt-body"><h3>${p.title}</h3><div><span>@ ${p.creator}</span><strong>${money(p.price)}</strong></div></div>`;grid.appendChild(a)});if(!grid.children.length)grid.innerHTML='<p style="color:#777;grid-column:1/-1">No prompts found.</p>'}
+function updateCart(){save('nex_cart',cart);$('#cartCount').textContent=cart.length}
+function setFilter(f){activeFilter=f;$$('.category').forEach(b=>b.classList.toggle('active',b.dataset.filter===f));renderPrompts()}
+function openDialog(id){const d=document.getElementById(id);if(d&&!d.open)d.showModal()}
+function closeDialog(id){document.getElementById(id)?.close()}
+function isPurchased(id){return purchases.includes(id)}
+function openProduct(id){const p=allPrompts().find(x=>x.id===id);if(!p)return;const unlocked=isPurchased(id);$('#productDetail').innerHTML=`<div class="product-wrap"><div class="product-preview" style="background-image:url('${p.image}')"></div><div class="product-info"><div class="tagline">${categoryLabel(p.category)} · ${p.model}</div><h2>${p.title}</h2><p>Premium image-to-video prompt by @${p.creator}. Designed for smooth motion, clear camera direction and cinematic results.</p><div class="product-meta"><span>★ 4.9 rating</span><span>⚡ Instant access</span><span>▣ Copy-ready</span></div><div class="product-price">${money(p.price)}</div><div class="prompt-lock ${unlocked?'unlocked':''}">${unlocked?`<strong>Unlocked prompt</strong><br><code>${p.prompt}</code>`:'🔒 Full prompt is hidden until purchase.'}</div><div class="product-actions">${unlocked?`<button class="primary" data-copy="${p.id}">Copy Prompt</button>`:`<button class="primary" data-add="${p.id}">${cart.includes(p.id)?'In Cart':'Add to Cart'}</button>`}<button class="secondary" data-fav="${p.id}">${favorites.includes(p.id)?'♥ Saved':'♡ Save'}</button></div></div></div>`;openDialog('productDialog')}
+function renderCart(){const box=$('#cartItems');box.innerHTML='';let total=0;cart.map(id=>allPrompts().find(p=>p.id===id)).filter(Boolean).forEach(p=>{total+=p.price;box.insertAdjacentHTML('beforeend',`<div class="cart-row"><div class="cart-thumb" style="background-image:url('${p.image}')"></div><div><h4>${p.title}</h4><small>${money(p.price)}</small></div><button class="remove-btn" data-remove="${p.id}">Remove</button></div>`)});if(!cart.length)box.innerHTML='<p>Your cart is empty.</p>';$('#cartTotal').textContent=money(total)}
+function renderLibrary(type){const ids=type==='favorites'?favorites:purchases;$('#libraryTitle').textContent=type==='favorites'?'Favorites':'My Purchases';const box=$('#libraryGrid');box.innerHTML='';ids.map(id=>allPrompts().find(p=>p.id===id)).filter(Boolean).forEach(p=>box.insertAdjacentHTML('beforeend',`<article class="library-card" data-library="${p.id}"><div class="img" style="background-image:url('${p.image}')"></div><div class="txt"><h4>${p.title}</h4><small>${type==='purchases'?'Unlocked · Click to open':money(p.price)}</small></div></article>`));if(!ids.length)box.innerHTML='<p>No items yet.</p>';openDialog('libraryDialog')}
+function updateUserUI(){if(user){$('#loginBtn').textContent=user.name;$('#signupSide').textContent='Account'}else{$('#loginBtn').textContent='Login / Sign up';$('#signupSide').textContent='Sign up now'}}
+$('#searchInput')?.addEventListener('input',renderPrompts);
+$('#categoryRow')?.addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(b)setFilter(b.dataset.filter)});
+$$('.filter-link').forEach(a=>a.addEventListener('click',()=>setFilter(a.dataset.filter)));
+$('#promptGrid')?.addEventListener('click',e=>{const heart=e.target.closest('[data-heart]');if(heart){e.stopPropagation();toggleFavorite(heart.dataset.heart);return}const card=e.target.closest('.prompt-card');if(card)openProduct(card.dataset.id)});
+function toggleFavorite(id){favorites=favorites.includes(id)?favorites.filter(x=>x!==id):[...favorites,id];save('nex_favorites',favorites);renderPrompts();toast(favorites.includes(id)?'Saved to favorites':'Removed from favorites')}
+$('#productDialog')?.addEventListener('click',e=>{const add=e.target.closest('[data-add]');const fav=e.target.closest('[data-fav]');const copy=e.target.closest('[data-copy]');if(add){if(!cart.includes(add.dataset.add))cart.push(add.dataset.add);updateCart();toast('Added to cart');openProduct(add.dataset.add)}if(fav){toggleFavorite(fav.dataset.fav);openProduct(fav.dataset.fav)}if(copy){const p=allPrompts().find(x=>x.id===copy.dataset.copy);navigator.clipboard?.writeText(p.prompt);toast('Prompt copied')}});
+$('#cartBtn')?.addEventListener('click',()=>{renderCart();openDialog('cartDialog')});
+$('#cartDialog')?.addEventListener('click',e=>{const r=e.target.closest('[data-remove]');if(r){cart=cart.filter(x=>x!==r.dataset.remove);updateCart();renderCart()}});
+$('#checkoutBtn')?.addEventListener('click',()=>{if(!cart.length)return toast('Your cart is empty');if(!user){closeDialog('cartDialog');openDialog('authDialog');toast('Sign in before checkout');return}closeDialog('cartDialog');openDialog('checkoutDialog')});
+$('#completePurchaseBtn')?.addEventListener('click',()=>{purchases=[...new Set([...purchases,...cart])];save('nex_purchases',purchases);cart=[];updateCart();closeDialog('checkoutDialog');toast('Demo purchase complete — prompts unlocked');renderLibrary('purchases')});
+$('#loginBtn')?.addEventListener('click',()=>openDialog('authDialog'));$('#signupSide')?.addEventListener('click',()=>openDialog('authDialog'));
+$('#authForm')?.addEventListener('submit',e=>{e.preventDefault();user={name:$('#authName').value.trim(),email:$('#authEmail').value.trim()};save('nex_user',user);updateUserUI();closeDialog('authDialog');toast('Signed in successfully')});
+$('#purchasesBtn')?.addEventListener('click',()=>renderLibrary('purchases'));$('#favoritesBtn')?.addEventListener('click',()=>renderLibrary('favorites'));$('#libraryDialog')?.addEventListener('click',e=>{const c=e.target.closest('[data-library]');if(c){closeDialog('libraryDialog');openProduct(c.dataset.library)}});
+$('#adminBtn')?.addEventListener('click',()=>openDialog('adminDialog'));
+$('#adminForm')?.addEventListener('submit',e=>{e.preventDefault();const p={id:'custom-'+Date.now(),title:$('#adminTitle').value.trim(),price:Number($('#adminPrice').value),category:$('#adminCategory').value,image:$('#adminImage').value.trim(),model:$('#adminModel').value.trim(),creator:user?.name||'Nex Prompt',prompt:$('#adminPrompt').value.trim()};custom.push(p);save('nex_custom_prompts',custom);e.target.reset();closeDialog('adminDialog');renderPrompts();toast('Prompt added to this browser')});
+$$('[data-close]').forEach(b=>b.addEventListener('click',()=>closeDialog(b.dataset.close)));
+$('#viewAllBtn')?.addEventListener('click',()=>{setFilter('all');$('#searchInput').value='';renderPrompts()});
+updateCart();updateUserUI();renderPrompts();
