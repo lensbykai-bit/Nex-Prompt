@@ -1,17 +1,18 @@
 (()=>{
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
   const RECEIPTS='nex_bakong_receipts';
-  let pollTimer=null,currentPayment=null,countdownTimer=null,countdownEnd=0;
+  let pollTimer=null,currentPayment=null,countdownTimer=null,countdownEnd=0,paymentCheckBusy=false;
 
   function receipts(){try{return JSON.parse(localStorage.getItem(RECEIPTS)||'[]')}catch{return []}}
   function saveReceipt(p){const all=receipts().filter(x=>x.client_token!==p.client_token);all.unshift(p);localStorage.setItem(RECEIPTS,JSON.stringify(all.slice(0,50)))}
   function receiptForPrompt(id){return receipts().find(r=>r.status==='paid'&&(r.prompt_ids||[]).map(String).includes(String(id)))}
   function totalCart(){return cart.map(id=>catalog.find(p=>p.id===id)).filter(Boolean).reduce((s,p)=>s+Number(p.price),0)}
   function setPayStatus(text,type='waiting'){const el=q('#bakongPayStatus');if(!el)return;el.textContent=text;el.dataset.type=type}
+  function isKh(){return localStorage.getItem('nex_prompt_lang')==='KH'}
   function loadQrLib(){return new Promise((resolve,reject)=>{if(window.QRCode)return resolve();const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
   async function renderQr(text){const box=q('#bakongQr');if(!box)return;box.innerHTML='';try{await loadQrLib();new QRCode(box,{text,width:260,height:260,correctLevel:QRCode.CorrectLevel.M})}catch{box.innerHTML='<div class="qr-fallback">QR preview unavailable.<br>Please refresh and try again.</div>'}}
   function stopCountdown(){if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null}}
-  function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}stopCountdown()}
+  function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}stopCountdown();paymentCheckBusy=false}
   function startCountdown(expiresAt){
     stopCountdown();
     const parsed=expiresAt?Date.parse(expiresAt):NaN;
@@ -21,8 +22,7 @@
       const left=Math.max(0,countdownEnd-Date.now());
       const totalSeconds=Math.ceil(left/1000),mins=Math.floor(totalSeconds/60),secs=totalSeconds%60;
       const time=`${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
-      const kh=localStorage.getItem('nex_prompt_lang')==='KH';
-      el.innerHTML=left>0?(kh?`⏱ QR នេះនៅសល់ <b>${time}</b> នាទី`:`⏱ QR expires in <b>${time}</b> minutes`):(kh?'⏱ QR បានផុតកំណត់':'⏱ QR expired');
+      el.innerHTML=left>0?(isKh()?`⏱ QR នេះនៅសល់ <b>${time}</b> នាទី`:`⏱ QR expires in <b>${time}</b> minutes`):(isKh()?'⏱ QR បានផុតកំណត់':'⏱ QR expired');
       el.dataset.expired=left<=0?'1':'0';
       if(left<=0)stopCountdown();
     };
@@ -34,18 +34,51 @@
   async function createBakongPayment(){
     if(!cart.length)return toast('Your cart is empty');
     stopPolling();currentPayment=null;const d=q('#checkoutDialog');d.innerHTML=paymentMarkup();bindCheckoutUi();if(!d.open)d.showModal();
-    try{const res=await api('bakong-create',{method:'POST',body:{prompt_ids:cart.map(Number)}});currentPayment={...res.payment,prompt_ids:cart.map(Number),status:'pending'};await renderQr(res.payment.qr_string);startCountdown(res.payment.expires_at);setPayStatus('Waiting for Bakong payment…','waiting');pollTimer=setInterval(checkBakongPayment,8000)}catch(err){setPayStatus(String(err.message||'Could not create KHQR.'),'error');const qr=q('#bakongQr');if(qr)qr.innerHTML='<div class="qr-fallback">Could not generate KHQR</div>'}
+    try{
+      const res=await api('bakong-create',{method:'POST',body:{prompt_ids:cart.map(Number)}});
+      currentPayment={...res.payment,prompt_ids:cart.map(Number),status:'pending'};
+      await renderQr(res.payment.qr_string);
+      startCountdown(res.payment.expires_at);
+      setPayStatus(isKh()?'កំពុងរង់ចាំការទូទាត់…':'Waiting for payment…','waiting');
+      pollTimer=setInterval(()=>checkBakongPayment(false),15000);
+    }catch(err){
+      setPayStatus(isKh()?'មិនអាចបង្កើត KHQR បានទេ។ សូមព្យាយាមម្តងទៀត។':'Could not create KHQR. Please try again.','error');
+      const qr=q('#bakongQr');if(qr)qr.innerHTML='<div class="qr-fallback">Could not generate KHQR</div>'
+    }
   }
-  async function checkBakongPayment(){
-    if(!currentPayment?.client_token)return;
-    const b=q('#bakongCheckBtn');if(b){b.disabled=true;b.textContent='Checking…'}
-    try{const r=await api('bakong-status',{method:'POST',body:{client_token:currentPayment.client_token}});if(r.status==='paid'){stopPolling();currentPayment.status='paid';currentPayment.paid_at=r.paid_at;currentPayment.reference=r.reference;saveReceipt(currentPayment);cart=[];updateCart();setPayStatus('✓ Payment confirmed — prompts unlocked','paid');if(b){b.textContent='Payment confirmed ✓';b.disabled=true}const n=q('#bakongNewBtn');if(n){n.textContent='View purchased prompt';n.onclick=()=>{const id=currentPayment.prompt_ids[0];closeDialog('checkoutDialog');openProduct(id)}}toast('Bakong payment confirmed')}else if(r.status==='expired'){stopPolling();setPayStatus('KHQR expired. Generate a new one.','error')}else setPayStatus('Waiting for payment confirmation…','waiting')}
-    catch(err){setPayStatus(String(err.message||'Could not check payment.'),'error')}
-    finally{if(b&&currentPayment?.status!=='paid'){b.disabled=false;b.textContent='Check payment'}}
+
+  async function checkBakongPayment(manual=false){
+    if(!currentPayment?.client_token||paymentCheckBusy)return;
+    paymentCheckBusy=true;
+    const b=q('#bakongCheckBtn');
+    if(manual&&b){b.disabled=true;b.textContent=isKh()?'កំពុងពិនិត្យ…':'Checking…'}
+    try{
+      const r=await api('bakong-status',{method:'POST',body:{client_token:currentPayment.client_token}});
+      if(r.status==='paid'){
+        stopPolling();currentPayment.status='paid';currentPayment.paid_at=r.paid_at;currentPayment.reference=r.reference;saveReceipt(currentPayment);cart=[];updateCart();
+        setPayStatus(isKh()?'✓ បានបញ្ជាក់ការទូទាត់ — Prompt ត្រូវបានដោះសោ':'✓ Payment confirmed — prompts unlocked','paid');
+        if(b){b.textContent=isKh()?'បានបញ្ជាក់ ✓':'Payment confirmed ✓';b.disabled=true}
+        const n=q('#bakongNewBtn');if(n){n.textContent=isKh()?'មើល Prompt ដែលបានទិញ':'View purchased prompt';n.onclick=()=>{const id=currentPayment.prompt_ids[0];closeDialog('checkoutDialog');openProduct(id)}}
+        toast(isKh()?'បានបញ្ជាក់ការទូទាត់ Bakong':'Bakong payment confirmed')
+      }else if(r.status==='expired'){
+        stopPolling();setPayStatus(isKh()?'KHQR ផុតកំណត់។ សូមបង្កើតថ្មី។':'KHQR expired. Generate a new one.','error')
+      }else{
+        setPayStatus(isKh()?'កំពុងរង់ចាំការបញ្ជាក់ការទូទាត់…':'Waiting for payment confirmation…','waiting')
+      }
+    }catch(err){
+      setPayStatus(isKh()?'កំពុងរង់ចាំការបញ្ជាក់ការទូទាត់… សូមព្យាយាមពិនិត្យម្តងទៀតបន្តិចទៀត។':'Waiting for payment confirmation… Please try checking again shortly.','waiting')
+    }finally{
+      paymentCheckBusy=false;
+      if(b&&currentPayment?.status!=='paid'){
+        b.disabled=false;
+        b.textContent=isKh()?'ពិនិត្យការទូទាត់':'Check payment';
+      }
+    }
   }
+
   function bindCheckoutUi(){
     q('#checkoutDialog [data-close]')?.addEventListener('click',()=>{stopPolling();closeDialog('checkoutDialog')});
-    q('#bakongCheckBtn')?.addEventListener('click',checkBakongPayment);
+    q('#bakongCheckBtn')?.addEventListener('click',()=>checkBakongPayment(true));
     q('#bakongNewBtn')?.addEventListener('click',createBakongPayment);
   }
 
