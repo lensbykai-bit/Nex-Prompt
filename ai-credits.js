@@ -32,6 +32,22 @@
     return d;
   }
   function formatCredits(n){return Number(n||0).toLocaleString()+' Credits'}
+  function ensureAuthEntry(){
+    let style=document.getElementById('nex-auth-entry-override');
+    if(!style){
+      style=document.createElement('style');
+      style.id='nex-auth-entry-override';
+      style.textContent=`
+        #loginBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;white-space:nowrap!important;min-height:42px!important;padding:0 17px!important;border-radius:14px!important;background:linear-gradient(135deg,#ff2d92,#ec2782)!important;color:#fff!important;border:1px solid rgba(255,119,180,.42)!important;box-shadow:0 9px 22px rgba(236,39,130,.22)!important;font-weight:800!important;cursor:pointer!important}
+        #loginBtn:hover{filter:brightness(1.06)!important;transform:translateY(-1px)!important}
+        @media(max-width:900px){#loginBtn{padding:0 12px!important;font-size:11px!important}}
+        @media(max-width:700px){#loginBtn{min-height:38px!important;padding:0 10px!important;font-size:10px!important}}
+      `;
+      document.head.appendChild(style);
+    }
+    const b=$('#loginBtn');
+    if(b&&!getSession()?.access_token)b.textContent=isKh()?'ចូល / ចុះឈ្មោះ':'Login / Sign up';
+  }
   async function loadBalance(){
     const pill=$('#creditBalance');if(!pill)return;
     const s=getSession();
@@ -121,6 +137,7 @@
     if($('#creditConfirmBtn'))$('#creditConfirmBtn').textContent=kh?'ទូទាត់តាម Bakong KHQR':'Pay with Bakong KHQR';
     if($('#creditCheckBtn'))$('#creditCheckBtn').textContent=kh?'ពិនិត្យការទូទាត់':'Check payment';
     if($('#creditNewQrBtn'))$('#creditNewQrBtn').textContent=kh?'បង្កើត QR ថ្មី':'Generate new QR';
+    ensureAuthEntry();
   }
   function wire(){
     $$('[data-credit-package]').forEach(b=>b.addEventListener('click',()=>choosePackage(b.dataset.creditPackage)));
@@ -135,6 +152,6 @@
     window.addEventListener('storage',e=>{if(e.key==='nex_cloud_session'||e.key==='nex_prompt_lang'){applyLanguage();loadBalance()}});
     $('#langSwitch')?.addEventListener('click',e=>{if(!e.target.closest('button[data-lang]'))return;setTimeout(()=>{applyLanguage();loadBalance()},0)});
   }
-  window.addEventListener('DOMContentLoaded',()=>{wire();applyLanguage();loadBalance();setTimeout(loadBalance,1800)});
+  window.addEventListener('DOMContentLoaded',()=>{wire();ensureAuthEntry();applyLanguage();loadBalance();setTimeout(()=>{ensureAuthEntry();applyLanguage();loadBalance()},1800)});
   window.NexCredits={loadBalance,choosePackage};
 })();
