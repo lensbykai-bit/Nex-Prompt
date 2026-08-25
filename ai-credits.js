@@ -116,7 +116,7 @@
   }
   function applyLanguage(){
     const kh=isKh();
-    $$('[data-credit-en]').forEach(el=>{el.textContent=kh?el.dataset.creditKm:el.dataset.creditEn});
+    $$('[data-credit-en]').forEach(el=>{const next=kh?el.dataset.creditKm:el.dataset.creditEn;if(el.textContent!==next)el.textContent=next});
     const pill=$('#creditBalance');if(pill&&!getSession()?.access_token)pill.textContent=kh?'ចូលគណនី':'Sign in';
     if($('#creditConfirmBtn'))$('#creditConfirmBtn').textContent=kh?'ទូទាត់តាម Bakong KHQR':'Pay with Bakong KHQR';
     if($('#creditCheckBtn'))$('#creditCheckBtn').textContent=kh?'ពិនិត្យការទូទាត់':'Check payment';
@@ -133,7 +133,7 @@
     $('#creditsSide')?.addEventListener('click',()=>$('#credit-plans')?.scrollIntoView({behavior:'smooth'}));
     $('#creditWalletBtn')?.addEventListener('click',()=>$('#credit-plans')?.scrollIntoView({behavior:'smooth'}));
     window.addEventListener('storage',e=>{if(e.key==='nex_cloud_session'||e.key==='nex_prompt_lang'){applyLanguage();loadBalance()}});
-    new MutationObserver(()=>applyLanguage()).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+    $('#langSwitch')?.addEventListener('click',e=>{if(!e.target.closest('button[data-lang]'))return;setTimeout(()=>{applyLanguage();loadBalance()},0)});
   }
   window.addEventListener('DOMContentLoaded',()=>{wire();applyLanguage();loadBalance();setTimeout(loadBalance,1800)});
   window.NexCredits={loadBalance,choosePackage};
