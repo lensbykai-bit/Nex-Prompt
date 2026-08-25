@@ -11,25 +11,143 @@
   const getSession=()=>{try{return JSON.parse(localStorage.getItem('nex_cloud_session')||'null')}catch{return null}};
   const showToast=m=>{const t=$('#toast');if(t){t.textContent=m;t.classList.add('show');clearTimeout(window.__creditToast);window.__creditToast=setTimeout(()=>t.classList.remove('show'),2800)}else alert(m)};
   const open=id=>{const d=document.getElementById(id);if(d&&!d.open)d.showModal()};
-  const close=id=>document.getElementById(id)?.close();
+  const close=id=>{const d=document.getElementById(id);if(d?.open)d.close()};
+
+  function safeScroll(selector){document.querySelector(selector)?.scrollIntoView({behavior:'smooth',block:'start'})}
+
+  function bindOnce(el,key,handler,options){
+    if(!el)return;
+    const flag='nexBound'+key;
+    if(el.dataset[flag])return;
+    el.dataset[flag]='1';
+    el.addEventListener('click',handler,options);
+  }
+
+  function wireImmediateInteractions(){
+    ensureAuthEntry();
+
+    bindOnce($('#loginBtn'),'Login',e=>{
+      e.preventDefault();e.stopImmediatePropagation();
+      try{if(typeof authStatus==='function')authStatus('');if(typeof updateConfirmCooldown==='function')updateConfirmCooldown()}catch{}
+      open('authDialog');
+    },true);
+
+    const authForm=$('#authForm');
+    if(authForm&&!authForm.dataset.nexImmediateSubmit){
+      authForm.dataset.nexImmediateSubmit='1';
+      authForm.addEventListener('submit',e=>{
+        e.preventDefault();e.stopImmediatePropagation();
+        if(typeof signup==='function')signup();
+      },true);
+    }
+
+    bindOnce($('#signInBtn'),'SignIn',e=>{
+      e.preventDefault();e.stopImmediatePropagation();
+      if(typeof signin==='function')signin();
+    },true);
+
+    bindOnce($('#logoutBtn'),'Logout',e=>{
+      e.preventDefault();e.stopImmediatePropagation();
+      try{
+        if(typeof session!=='undefined')session=null;
+        if(typeof favorites!=='undefined')favorites=[];
+        if(typeof purchases!=='undefined')purchases=[];
+        localStorage.removeItem('nex_cloud_session');
+        if(typeof updateUser==='function')updateUser();
+        if(typeof renderPrompts==='function')renderPrompts();
+        close('authDialog');
+        showToast(txt('Signed out.','បានចាកចេញពីគណនី។'));
+        loadBalance();ensureAuthEntry();
+      }catch{}
+    },true);
+
+    $$('[data-close]').forEach(b=>bindOnce(b,'Close',e=>{
+      e.preventDefault();e.stopImmediatePropagation();close(b.dataset.close);
+    },true));
+
+    bindOnce($('#cartBtn'),'Cart',e=>{
+      e.preventDefault();e.stopImmediatePropagation();
+      try{if(typeof renderCart==='function')renderCart()}catch{}
+      open('cartDialog');
+    },true);
+    bindOnce($('#mobileCart'),'MobileCart',e=>{
+      e.preventDefault();e.stopImmediatePropagation();
+      try{if(typeof renderCart==='function')renderCart()}catch{}
+      open('cartDialog');
+    },true);
+
+    bindOnce($('#exploreBtn'),'Explore',e=>{e.preventDefault();e.stopImmediatePropagation();safeScroll('#popular')},true);
+    bindOnce($('#viewAllBtn'),'ViewAll',e=>{e.preventDefault();e.stopImmediatePropagation();safeScroll('#popular')},true);
+    bindOnce($('#creatorAdminBtn'),'CreatorExplore',e=>{e.preventDefault();e.stopImmediatePropagation();safeScroll('#popular')},true);
+    bindOnce($('#howBtn'),'How',e=>{e.preventDefault();e.stopImmediatePropagation();safeScroll('#how')},true);
+
+    bindOnce($('#mobileMenuBtn'),'Menu',e=>{
+      e.preventDefault();e.stopImmediatePropagation();$('#sidebar')?.classList.toggle('open');
+    },true);
+
+    $$('.category').forEach(b=>bindOnce(b,'Category',e=>{
+      e.preventDefault();e.stopImmediatePropagation();
+      try{
+        if(typeof activeFilter!=='undefined')activeFilter=b.dataset.filter||'all';
+        $$('.category').forEach(x=>x.classList.toggle('active',x===b));
+        if(typeof renderPrompts==='function')renderPrompts();
+      }catch{}
+    },true));
+
+    $$('.filter-link').forEach(a=>bindOnce(a,'Filter',e=>{
+      try{
+        if(typeof activeFilter!=='undefined')activeFilter=a.dataset.filter||'all';
+        if(typeof renderPrompts==='function')renderPrompts();
+      }catch{}
+    },true));
+
+    const grid=$('#promptGrid');
+    if(grid&&!grid.dataset.nexImmediateGrid){
+      grid.dataset.nexImmediateGrid='1';
+      grid.addEventListener('click',e=>{
+        const heart=e.target.closest('[data-heart]');
+        if(heart){e.preventDefault();e.stopImmediatePropagation();if(typeof toggleFavorite==='function')toggleFavorite(heart.dataset.heart);return}
+        const card=e.target.closest('.prompt-card');
+        if(card&&typeof openProduct==='function'){e.preventDefault();e.stopImmediatePropagation();openProduct(card.dataset.id)}
+      },true);
+    }
+
+    bindOnce($('#footerLogin'),'FooterLogin',e=>{e.preventDefault();e.stopImmediatePropagation();open('authDialog')},true);
+
+    const contact=$('#contactForm');
+    if(contact&&!contact.dataset.nexImmediateSubmit){
+      contact.dataset.nexImmediateSubmit='1';
+      contact.addEventListener('submit',e=>{
+        e.preventDefault();e.stopImmediatePropagation();showToast(txt('Message ready.','សាររបស់អ្នកបានត្រៀមរួច។'));
+      },true);
+    }
+  }
+
   function authRequired(){
     const s=getSession();
     if(s?.access_token)return s;
     close('creditDialog');close('creditPaymentDialog');
-    const d=$('#authDialog');if(d&&!d.open)d.showModal();
+    open('authDialog');
     showToast(txt('Sign in first to buy credits.','សូមចូលគណនីជាមុន ដើម្បីទិញ Credits។'));
     return null;
   }
   async function request(action,{method='GET',body}={}){
     const s=getSession();
     if(!s?.access_token)throw new Error(txt('Please sign in first.','សូមចូលគណនីជាមុន។'));
-    const r=await fetch(`${CREDIT_API}?action=${encodeURIComponent(action)}`,{
-      method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${s.access_token}`},
-      body:body?JSON.stringify(body):undefined
-    });
-    let d={};try{d=await r.json()}catch{}
-    if(!r.ok)throw new Error(d.error||txt('Request failed.','សំណើមិនបានសម្រេច។'));
-    return d;
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),12000);
+    try{
+      const r=await fetch(`${CREDIT_API}?action=${encodeURIComponent(action)}`,{
+        method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${s.access_token}`},
+        body:body?JSON.stringify(body):undefined,signal:controller.signal
+      });
+      let d={};try{d=await r.json()}catch{}
+      if(!r.ok)throw new Error(d.error||txt('Request failed.','សំណើមិនបានសម្រេច។'));
+      return d;
+    }catch(e){
+      if(e?.name==='AbortError')throw new Error(txt('Connection timed out. Please try again.','ការតភ្ជាប់យូរពេក។ សូមសាកម្តងទៀត។'));
+      throw e;
+    }finally{clearTimeout(timer)}
   }
   function formatCredits(n){return Number(n||0).toLocaleString()+' Credits'}
   function ensureAuthEntry(){
@@ -38,8 +156,9 @@
       style=document.createElement('style');
       style.id='nex-auth-entry-override';
       style.textContent=`
-        #loginBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;white-space:nowrap!important;min-height:42px!important;padding:0 17px!important;border-radius:14px!important;background:linear-gradient(135deg,#ff2d92,#ec2782)!important;color:#fff!important;border:1px solid rgba(255,119,180,.42)!important;box-shadow:0 9px 22px rgba(236,39,130,.22)!important;font-weight:800!important;cursor:pointer!important}
+        #loginBtn{display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;white-space:nowrap!important;min-height:42px!important;padding:0 17px!important;border-radius:14px!important;background:linear-gradient(135deg,#ff2d92,#ec2782)!important;color:#fff!important;border:1px solid rgba(255,119,180,.42)!important;box-shadow:0 9px 22px rgba(236,39,130,.22)!important;font-weight:800!important;cursor:pointer!important;pointer-events:auto!important;position:relative!important;z-index:20!important}
         #loginBtn:hover{filter:brightness(1.06)!important;transform:translateY(-1px)!important}
+        button,a,input,select,textarea{pointer-events:auto}
         @media(max-width:900px){#loginBtn{padding:0 12px!important;font-size:11px!important}}
         @media(max-width:700px){#loginBtn{min-height:38px!important;padding:0 10px!important;font-size:10px!important}}
       `;
@@ -140,6 +259,7 @@
     ensureAuthEntry();
   }
   function wire(){
+    wireImmediateInteractions();
     $$('[data-credit-package]').forEach(b=>b.addEventListener('click',()=>choosePackage(b.dataset.creditPackage)));
     $('#creditConfirmBtn')?.addEventListener('click',createPayment);
     $('#creditCheckBtn')?.addEventListener('click',()=>checkPayment(true));
@@ -147,11 +267,15 @@
     $$('[data-credit-close]').forEach(b=>b.addEventListener('click',()=>{stopLoops();close(b.dataset.creditClose)}));
     $('#creditDialog')?.addEventListener('click',e=>{if(e.target===$('#creditDialog'))close('creditDialog')});
     $('#creditPaymentDialog')?.addEventListener('click',e=>{if(e.target===$('#creditPaymentDialog')){stopLoops();close('creditPaymentDialog')}});
-    $('#creditsSide')?.addEventListener('click',()=>$('#credit-plans')?.scrollIntoView({behavior:'smooth'}));
-    $('#creditWalletBtn')?.addEventListener('click',()=>$('#credit-plans')?.scrollIntoView({behavior:'smooth'}));
+    $('#creditsSide')?.addEventListener('click',()=>safeScroll('#credit-plans'));
+    $('#creditWalletBtn')?.addEventListener('click',()=>safeScroll('#credit-plans'));
     window.addEventListener('storage',e=>{if(e.key==='nex_cloud_session'||e.key==='nex_prompt_lang'){applyLanguage();loadBalance()}});
-    $('#langSwitch')?.addEventListener('click',e=>{if(!e.target.closest('button[data-lang]'))return;setTimeout(()=>{applyLanguage();loadBalance()},0)});
+    $('#langSwitch')?.addEventListener('click',e=>{if(!e.target.closest('button[data-lang]'))return;setTimeout(()=>{applyLanguage();loadBalance();wireImmediateInteractions()},0)});
   }
-  window.addEventListener('DOMContentLoaded',()=>{wire();ensureAuthEntry();applyLanguage();loadBalance();setTimeout(()=>{ensureAuthEntry();applyLanguage();loadBalance()},1800)});
+  window.addEventListener('DOMContentLoaded',()=>{
+    wire();ensureAuthEntry();applyLanguage();loadBalance();
+    setTimeout(()=>{ensureAuthEntry();applyLanguage();wireImmediateInteractions();loadBalance()},800);
+    setTimeout(()=>{wireImmediateInteractions()},2500);
+  });
   window.NexCredits={loadBalance,choosePackage};
 })();
