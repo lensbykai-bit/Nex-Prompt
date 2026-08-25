@@ -1,7 +1,7 @@
 (()=>{
   const q=s=>document.querySelector(s), qa=s=>[...document.querySelectorAll(s)];
   const RECEIPTS='nex_bakong_receipts';
-  let pollTimer=null,currentPayment=null;
+  let pollTimer=null,currentPayment=null,countdownTimer=null,countdownEnd=0;
 
   function receipts(){try{return JSON.parse(localStorage.getItem(RECEIPTS)||'[]')}catch{return []}}
   function saveReceipt(p){const all=receipts().filter(x=>x.client_token!==p.client_token);all.unshift(p);localStorage.setItem(RECEIPTS,JSON.stringify(all.slice(0,50)))}
@@ -10,14 +10,31 @@
   function setPayStatus(text,type='waiting'){const el=q('#bakongPayStatus');if(!el)return;el.textContent=text;el.dataset.type=type}
   function loadQrLib(){return new Promise((resolve,reject)=>{if(window.QRCode)return resolve();const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
   async function renderQr(text){const box=q('#bakongQr');if(!box)return;box.innerHTML='';try{await loadQrLib();new QRCode(box,{text,width:260,height:260,correctLevel:QRCode.CorrectLevel.M})}catch{box.innerHTML='<div class="qr-fallback">QR preview unavailable.<br>Please refresh and try again.</div>'}}
-  function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}}
+  function stopCountdown(){if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null}}
+  function stopPolling(){if(pollTimer){clearInterval(pollTimer);pollTimer=null}stopCountdown()}
+  function startCountdown(expiresAt){
+    stopCountdown();
+    const parsed=expiresAt?Date.parse(expiresAt):NaN;
+    countdownEnd=Number.isFinite(parsed)?parsed:(Date.now()+10*60*1000);
+    const tick=()=>{
+      const el=q('#bakongMinuteTimer');if(!el){stopCountdown();return}
+      const left=Math.max(0,countdownEnd-Date.now());
+      const totalSeconds=Math.ceil(left/1000),mins=Math.floor(totalSeconds/60),secs=totalSeconds%60;
+      const time=`${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+      const kh=localStorage.getItem('nex_prompt_lang')==='KH';
+      el.innerHTML=left>0?(kh?`⏱ QR នេះនៅសល់ <b>${time}</b> នាទី`:`⏱ QR expires in <b>${time}</b> minutes`):(kh?'⏱ QR បានផុតកំណត់':'⏱ QR expired');
+      el.dataset.expired=left<=0?'1':'0';
+      if(left<=0)stopCountdown();
+    };
+    tick();countdownTimer=setInterval(tick,1000);
+  }
 
-  function paymentMarkup(){const total=totalCart();return `<button class="modal-close bakong-close" data-close="checkoutDialog">×</button><div class="modal-pad bakong-checkout"><div class="bakong-chip">✿ BAKONG - KHQR</div><div class="bakong-brand"><div class="bakong-brand-mark">N</div><div><h2>Nex Prompt</h2><p>Create Smarter. Faster.</p></div></div><h3 class="bakong-scan-title">Scan to Pay <span>✓</span></h3><p class="bakong-subtitle">Pay securely with Bakong (KHQR)</p><div class="bakong-amount"><span>Amount to pay</span><strong>$${total.toFixed(2)}</strong><b>USD</b></div><div class="bakong-qr-shell"><div id="bakongQr" class="bakong-qr"><div class="qr-loading">Generating KHQR…</div></div></div><div id="bakongPayStatus" class="bakong-status" data-type="waiting">Waiting for Bakong payment…</div><div class="bakong-help"><span>🔒</span><div><strong>Scan the QR code with any Cambodian banking or wallet app</strong><p>ABA &nbsp;|&nbsp; Bakong &nbsp;|&nbsp; Wing &nbsp;|&nbsp; ACLEDA &nbsp;|&nbsp; Canadia &nbsp;|&nbsp; and more...</p></div></div><div class="bakong-secure">◆ Secure payment by Bakong</div><div class="bakong-actions"><button id="bakongCheckBtn" class="primary full" type="button">Check payment</button><button id="bakongNewBtn" class="secondary full" type="button">Generate new QR</button></div></div>`}
+  function paymentMarkup(){const total=totalCart();return `<button class="modal-close bakong-close" data-close="checkoutDialog">×</button><div class="modal-pad bakong-checkout"><div class="bakong-chip">✿ BAKONG - KHQR</div><div class="bakong-brand"><div class="bakong-brand-mark">N</div><div><h2>Nex Prompt</h2><p>Create Smarter. Faster.</p></div></div><h3 class="bakong-scan-title">Scan to Pay <span>✓</span></h3><p class="bakong-subtitle">Pay securely with Bakong (KHQR)</p><div class="bakong-amount"><span>Amount to pay</span><strong>$${total.toFixed(2)}</strong><b>USD</b></div><div class="bakong-qr-shell"><div id="bakongQr" class="bakong-qr"><div class="qr-loading">Generating KHQR…</div></div></div><div id="bakongMinuteTimer" class="bakong-minute-timer">⏱ QR expires in <b>10:00</b> minutes</div><div id="bakongPayStatus" class="bakong-status" data-type="waiting">Waiting for Bakong payment…</div><div class="bakong-help"><span>🔒</span><div><strong>Scan the QR code with any Cambodian banking or wallet app</strong><p>ABA &nbsp;|&nbsp; Bakong &nbsp;|&nbsp; Wing &nbsp;|&nbsp; ACLEDA &nbsp;|&nbsp; Canadia &nbsp;|&nbsp; and more...</p></div></div><div class="bakong-secure">◆ Secure payment by Bakong</div><div class="bakong-actions"><button id="bakongCheckBtn" class="primary full" type="button">Check payment</button><button id="bakongNewBtn" class="secondary full" type="button">Generate new QR</button></div></div>`}
 
   async function createBakongPayment(){
     if(!cart.length)return toast('Your cart is empty');
     stopPolling();currentPayment=null;const d=q('#checkoutDialog');d.innerHTML=paymentMarkup();bindCheckoutUi();if(!d.open)d.showModal();
-    try{const res=await api('bakong-create',{method:'POST',body:{prompt_ids:cart.map(Number)}});currentPayment={...res.payment,prompt_ids:cart.map(Number),status:'pending'};await renderQr(res.payment.qr_string);setPayStatus('Waiting for Bakong payment…','waiting');pollTimer=setInterval(checkBakongPayment,8000)}catch(err){setPayStatus(String(err.message||'Could not create KHQR.'),'error');const qr=q('#bakongQr');if(qr)qr.innerHTML='<div class="qr-fallback">Could not generate KHQR</div>'}
+    try{const res=await api('bakong-create',{method:'POST',body:{prompt_ids:cart.map(Number)}});currentPayment={...res.payment,prompt_ids:cart.map(Number),status:'pending'};await renderQr(res.payment.qr_string);startCountdown(res.payment.expires_at);setPayStatus('Waiting for Bakong payment…','waiting');pollTimer=setInterval(checkBakongPayment,8000)}catch(err){setPayStatus(String(err.message||'Could not create KHQR.'),'error');const qr=q('#bakongQr');if(qr)qr.innerHTML='<div class="qr-fallback">Could not generate KHQR</div>'}
   }
   async function checkBakongPayment(){
     if(!currentPayment?.client_token)return;
@@ -66,7 +83,10 @@
 .bakong-qr{min-height:260px;display:grid;place-items:center;background:#fff;border-radius:16px;overflow:hidden}
 .bakong-qr img,.bakong-qr canvas{width:260px!important;height:260px!important;max-width:100%;image-rendering:auto}
 .qr-loading,.qr-fallback{color:#9a8794;text-align:center;font-size:12px}
-.bakong-status{margin:14px auto 0;max-width:410px;padding:10px 14px;border-radius:13px;background:#fff0f7;color:#e92783;font-size:12px;font-weight:800}
+.bakong-minute-timer{margin:14px auto 0;max-width:410px;padding:12px 16px;border-radius:14px;background:linear-gradient(135deg,#fff7fb,#ffeaf5);border:1px solid #ffd2e7;color:#8f6e80;font-size:13px;font-weight:700;letter-spacing:.01em;box-shadow:0 7px 20px rgba(236,72,153,.07)}
+.bakong-minute-timer b{color:#f0157c;font-size:18px;font-variant-numeric:tabular-nums;margin:0 3px}.bakong-minute-timer[data-expired="1"]{background:#fff1f2;color:#b73747;border-color:#ffc9cf}.bakong-minute-timer[data-expired="1"] b{color:#b73747}
+html[lang="km"] .bakong-minute-timer{font-family:"Khmer OS Metal Chrieng","Khmer OS","Noto Sans Khmer",sans-serif;line-height:1.8}
+.bakong-status{margin:10px auto 0;max-width:410px;padding:10px 14px;border-radius:13px;background:#fff0f7;color:#e92783;font-size:12px;font-weight:800}
 .bakong-status[data-type=paid]{background:#ecfff4;color:#16864b}.bakong-status[data-type=error]{background:#fff0f1;color:#b73747}
 .bakong-help{margin:16px auto 0;max-width:460px;padding:14px 16px;border-radius:18px;background:linear-gradient(135deg,#fff0f8,#ffe8f4);display:flex;align-items:center;gap:12px;text-align:left;color:#e91e7b}
 .bakong-help>span{font-size:24px}.bakong-help strong{display:block;font-size:12px;line-height:1.45}.bakong-help p{margin:4px 0 0!important;font-size:10px!important;color:#8a7682!important;line-height:1.5}
