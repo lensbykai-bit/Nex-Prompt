@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Replace visible brand text
+      - name: Update NEXORA Ai visible text
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -50,6 +50,19 @@ jobs:
               new = text
               for old, replacement in replacements:
                   new = new.replace(old, replacement)
+
+              if path.name == 'forgot-password.js':
+                  thank_replacements = [
+                      ('PAYMENT SUCCESSFUL', 'ការទូទាត់ជោគជ័យ'),
+                      ('Thank you for using NEXORA Ai', 'អរគុណសម្រាប់ការប្រើប្រាស់ NEXORA Ai'),
+                      ('Your payment was completed successfully. Your purchased Prompt is now saved in My Prompts.', 'ការទូទាត់របស់អ្នកបានជោគជ័យ។ Prompt ដែលអ្នកបានទិញត្រូវបានរក្សាទុកក្នុង Prompt របស់ខ្ញុំ រួចហើយ។'),
+                      ('Your payment was completed successfully.', 'ការទូទាត់របស់អ្នកបានជោគជ័យ។ Prompt ដែលអ្នកបានទិញត្រូវបានរក្សាទុកក្នុង Prompt របស់ខ្ញុំ រួចហើយ។'),
+                      ('>Continue</button>', '>បន្ត</button>'),
+                      ("btn.textContent='Continue'", "btn.textContent='បន្ត'"),
+                  ]
+                  for old, replacement in thank_replacements:
+                      new = new.replace(old, replacement)
+
               if new != text:
                   path.write_text(new, encoding='utf-8')
                   changed.append(str(path))
@@ -59,14 +72,14 @@ jobs:
               print(' -', p)
           PY
 
-      - name: Commit rebrand
+      - name: Commit updates
         run: |
           if git diff --quiet; then
-            echo "No brand text changes needed."
+            echo "No visible text changes needed."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add '*.html' '*.css' '*.js'
-          git commit -m "Polish NEXORA Ai branding"
+          git commit -m "Translate payment success popup to Khmer"
           git push
