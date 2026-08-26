@@ -1,0 +1,28 @@
+name: Fix NEXORA Ai header logo final
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-logo-final.yml'
+permissions:
+  contents: write
+jobs:
+  fix-logo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Switch header to verified logo asset
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('assets/nexora-ai-logo-header-v4.webp?v=20260827','assets/nexora-ai-logo-header-v2.webp?v=20260827-final')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Use verified visible NEXORA Ai logo"
+          git push
