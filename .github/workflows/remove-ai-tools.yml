@@ -1,0 +1,49 @@
+name: Remove AI Tools UI
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove AI Tools UI
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('<meta name="description" content="NEXORA Ai prompt marketplace and AI tools for creators.">','<meta name="description" content="NEXORA Ai prompt marketplace for creators.">')
+          s=s.replace('<a href="#tools" data-route="tools" data-t="AI Tools">AI Tools</a>\n','')
+          s=s.replace('<a class="home-card" href="#tools" data-route="tools"><div class="icon">✦</div><h3>AI Tools Workspace</h3><p>One member account for AI Image, Video, Voice and Dubbing.</p><span class="link-pink">Open tools →</span></a>\n','')
+          s=s.replace('<p class="section-lead">Start with prompts, create one account, and use NEXORA Ai Tools from one workspace.</p>','<p class="section-lead">Choose a Prompt, purchase securely, and access it from My Prompts.</p>')
+          s=s.replace('<p>Browse Prompt or select an AI Tool.</p>','<p>Browse and choose the Prompt you want.</p>')
+          s=s.replace('<p>Use your purchased prompt and creator tools.</p>','<p>Open your purchased Prompt from My Prompts.</p>')
+          s=re.sub(r'<section class="view" id="toolsView" data-view="tools">.*?</section>\n','',s,flags=re.S)
+          s=re.sub(r'<dialog class="modal" id="toolModal">.*?</dialog>\n','',s,flags=re.S)
+          p.write_text(s)
+
+          p=Path('app.js')
+          s=p.read_text()
+          s=s.replace("'AI Tools':['AI Tools','AI Tools'],\n",'')
+          s=s.replace("'Open AI Tools':['Open AI Tools','បើក AI Tools'],\n",'')
+          s=s.replace("account.innerHTML='<div class=\"account-avatar\">N</div><h3 id=\"accountName\">My account</h3><p class=\"auth-help\" id=\"accountEmail\"></p><div class=\"account-actions\"><button class=\"btn btn-primary\" id=\"accountToolsBtn\" type=\"button\">Open AI Tools</button></div><button class=\"auth-danger\" id=\"accountSignOutBtn\" type=\"button\">Sign out</button>';","account.innerHTML='<div class=\"account-avatar\">N</div><h3 id=\"accountName\">My account</h3><p class=\"auth-help\" id=\"accountEmail\"></p><button class=\"auth-danger\" id=\"accountSignOutBtn\" type=\"button\">Sign out</button>';")
+          s=s.replace("if($('#accountToolsBtn'))$('#accountToolsBtn').textContent=tr('Open AI Tools');",'')
+          s=s.replace("on('#accountToolsBtn','click',function(){closeModal('#authModal');route('tools')});",'')
+          s=re.sub(r"function openTool\(name\)\{.*?\}\nfunction refreshBalance",'function refreshBalance',s,flags=re.S)
+          s=s.replace("var tool=e.target.closest('[data-tool]');if(tool){openTool(tool.getAttribute('data-tool'));return}",'')
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html app.js
+          git commit -m "Temporarily remove AI Tools UI"
+          git push
