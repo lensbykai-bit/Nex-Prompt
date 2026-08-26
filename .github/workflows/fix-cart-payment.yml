@@ -1,0 +1,34 @@
+name: Fix NEXORA Ai cart payment flow
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-cart-payment.yml'
+      - '.github/scripts/fix_cart_payment.py'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Close cart when payment opens
+        run: python3 .github/scripts/fix_cart_payment.py
+
+      - name: Commit payment UX fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add forgot-password.js
+          if git diff --cached --quiet; then
+            echo "No changes needed."
+            exit 0
+          fi
+          git commit -m "Close cart when KHQR payment opens"
+          git push
