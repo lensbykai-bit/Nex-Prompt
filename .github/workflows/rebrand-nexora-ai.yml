@@ -32,5 +32,5 @@ jobs:
             echo "No frontend changes needed."
             exit 0
           fi
-          git commit -m "Add seven-day My Prompts access flow"
+          git commit -m "Fix checkout for active purchased prompts"
           git push
