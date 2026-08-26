@@ -1,4 +1,4 @@
-name: Rebrand to NEXORA Ai
+name: NEXORA Ai purchase maintenance
 
 on:
   push:
@@ -17,17 +17,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Apply session refresh repair
+      - name: Keep login session refresh working
         run: python3 .github/scripts/patch_session.py
 
-      - name: Commit repaired frontend
+      - name: Apply seven-day purchase access UI
+        run: python3 .github/scripts/patch_purchase_expiry.py
+
+      - name: Commit NEXORA Ai frontend updates
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add app.js forgot-password.js
           if git diff --cached --quiet; then
-            echo "No repair changes needed."
+            echo "No frontend changes needed."
             exit 0
           fi
-          git commit -m "Fix expired login session checkout"
+          git commit -m "Add seven-day My Prompts access flow"
           git push
