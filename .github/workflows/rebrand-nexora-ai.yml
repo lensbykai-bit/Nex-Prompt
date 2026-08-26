@@ -1,0 +1,70 @@
+name: Rebrand to NEXORA Ai
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/rebrand-nexora-ai.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  rebrand:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Replace visible brand text
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          files = []
+          for pattern in ('*.html', '*.css', '*.js'):
+              files.extend(Path('.').glob(pattern))
+
+          replacements = [
+              ('%C2%A9 Nex Prompt %E2%80%A2 Rafy Bo', '%C2%A9%20NEXORA%20Ai'),
+              ('%C2%A9 NEXORA-Ai', '%C2%A9%20NEXORA%20Ai'),
+              ('%C2%A9 NEXORA-AI', '%C2%A9%20NEXORA%20Ai'),
+              ('Nex <b>Prompt</b>', 'NEXORA <b>Ai</b>'),
+              ('Nex <strong>Prompt</strong>', 'NEXORA <strong>Ai</strong>'),
+              ('© Nex Prompt • Rafy Bo', '© NEXORA Ai'),
+              ('© Nex Prompt', '© NEXORA Ai'),
+              ('© NEXORA-Ai', '© NEXORA Ai'),
+              ('© NEXORA-AI', '© NEXORA Ai'),
+              ('NEXORA-AI', 'NEXORA Ai'),
+              ('NEXORA-Ai', 'NEXORA Ai'),
+              ('Nexora Ai', 'NEXORA Ai'),
+              ('Nex Prompt', 'NEXORA Ai'),
+          ]
+
+          changed = []
+          for path in sorted(set(files)):
+              text = path.read_text(encoding='utf-8')
+              new = text
+              for old, replacement in replacements:
+                  new = new.replace(old, replacement)
+              if new != text:
+                  path.write_text(new, encoding='utf-8')
+                  changed.append(str(path))
+
+          print('Changed files:')
+          for p in changed:
+              print(' -', p)
+          PY
+
+      - name: Commit rebrand
+        run: |
+          if git diff --quiet; then
+            echo "No brand text changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add '*.html' '*.css' '*.js'
+          git commit -m "Rebrand website to NEXORA Ai"
+          git push
