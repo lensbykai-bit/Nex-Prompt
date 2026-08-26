@@ -34,6 +34,12 @@ s, n = re.subn(r"function renderPurchases\(\)\{.*?\}\nfunction loadPurchases", n
 if n != 1:
     raise SystemExit('Could not replace renderPurchases()')
 
+# If the whole cart is already owned and still active, do not look broken: clear that cart and take the user to My Prompts.
+new_checkout = r'''function startPromptCheckout(){var s=getSession();if(!s||!s.access_token){var b=$('#signInBtn');if(b)b.click();return}var ids=getCart().map(Number).filter(function(x){return Number.isInteger(x)&&x>0});if(!ids.length)return;authFetch('bakong-create',{method:'POST',body:{prompt_ids:ids}}).then(function(d){openPayment(d.payment||{})}).catch(function(err){var msg=String(err&&err.message||'');if(/បានទិញរួច|already own|My Prompts/i.test(msg)){localStorage.setItem('nex_cart_cloud','[]');var c=$('#cartCount');if(c)c.textContent='0';var cart=$('#cartModal');try{if(cart&&cart.open)cart.close()}catch(e){if(cart)cart.removeAttribute('open')}showMyPrompts();var t=$('#toast');if(t){t.textContent=isKH()?'Prompt នេះបានទិញរួច និងនៅមិនទាន់ផុត ៧ ថ្ងៃទេ។ សូមមើលក្នុង Prompt របស់ខ្ញុំ។':'This Prompt is already active in My Prompts. You can buy it again after it expires.';t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3500)}return}var t=$('#toast');if(t){t.textContent=msg||'Could not create KHQR';t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}})}'''
+s, n2 = re.subn(r"function startPromptCheckout\(\)\{.*?\}\nfunction checkPromptPayment", new_checkout + "\nfunction checkPromptPayment", s, count=1, flags=re.S)
+if n2 != 1:
+    raise SystemExit('Could not replace startPromptCheckout()')
+
 # If My Prompts stays open for days, refresh it periodically so expired items disappear without a manual reload.
 needle = "setInterval(syncMyPrompts,1500);var h=(location.hash||'').slice(1);"
 replacement = "setInterval(syncMyPrompts,1500);setInterval(function(){var v=$('#myPromptsView');if(v&&v.classList.contains('active')&&getSession())loadPurchases()},60000);var h=(location.hash||'').slice(1);"
