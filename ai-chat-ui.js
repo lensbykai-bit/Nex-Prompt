@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var AI='https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/ai-chat';
+var AI='/api/chat';
 var REFRESH='https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/auth-refresh';
 var messages=[];
 var sending=false;
@@ -22,6 +22,6 @@ d.addEventListener('click',function(e){if(e.target===d){try{d.close()}catch(err)
 render();return d}
 function render(){ensureUI();var box=$('#aiChatMessages');if(!box)return;if(!messages.length){box.innerHTML='<div class="ai-chat-empty"><strong>✦ AI Chat · FREE</strong>'+(isKH()?'សរសេរសំណួរ ឬការងារដែលអ្នកចង់ឲ្យ NEXORA Ai ជួយ។ AI Chat នេះឥតគិតថ្លៃ និងមិនកាត់ Credits ទេ។':'Ask, write, summarize or brainstorm with NEXORA Ai. AI Chat is free and does not use Credits.')+'</div>';return}box.innerHTML=messages.map(function(m){return '<div class="ai-msg '+(m.role==='user'?'user':'assistant')+'">'+esc(m.content)+'</div>'}).join('')+(sending?'<div class="ai-msg assistant loading">'+(isKH()?'NEXORA Ai កំពុងគិត…':'NEXORA Ai is thinking…')+'</div>':'');box.scrollTop=box.scrollHeight}
 function openChat(){var s=getSession();if(!s||!s.access_token){var sign=$('#signInBtn');if(sign)sign.click();return}var d=ensureUI();render();try{if(!d.open)d.showModal()}catch(e){d.setAttribute('open','')}setTimeout(function(){var i=$('#aiChatInput');if(i)i.focus()},80)}
-function send(){if(sending)return;var input=$('#aiChatInput');var text=String(input&&input.value||'').trim();if(!text)return;messages.push({role:'user',content:text});if(input)input.value='';sending=true;render();var btn=$('#aiChatSend');if(btn)btn.disabled=true;apiCall({messages:messages},true).then(function(d){messages.push({role:'assistant',content:String(d.text||'')})}).catch(function(err){if(err.message==='SIGN_IN_REQUIRED'){var sign=$('#signInBtn');if(sign)sign.click();return}messages.push({role:'assistant',content:String(err.message||'AI service is unavailable.')})}).finally(function(){sending=false;if(btn)btn.disabled=false;render()})}
+function send(){if(sending)return;var input=$('#aiChatInput');var text=String(input&&input.value||'').trim();if(!text)return;messages.push({role:'user',content:text});if(input)input.value='';sending=true;render();var btn=$('#aiChatSend');if(btn)btn.disabled=true;apiCall({messages:messages},true).then(function(d){messages.push({role:'assistant',content:String(d.text||'')})}).catch(function(err){if(err.message==='SIGN_IN_REQUIRED'){var sign=$('#signInBtn');if(sign)sign.click();return}messages.push({role:'assistant',content:isKH()?'AI Chat មិនអាចឆ្លើយបានឥឡូវនេះ។ សូមសាកម្តងទៀត។':String(err.message||'AI service is unavailable. Please try again.')})}).finally(function(){sending=false;if(btn)btn.disabled=false;render()})}
 document.addEventListener('click',function(e){var card=e.target.closest('[data-tool="AI Chat"]');if(!card)return;e.preventDefault();e.stopImmediatePropagation();openChat()},true);
 })();
