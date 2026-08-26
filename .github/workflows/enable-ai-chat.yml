@@ -1,0 +1,37 @@
+name: Enable NEXORA Ai Chat
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/enable-ai-chat.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add AI Chat script to website
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          tag='<script src="ai-chat-ui.js?v=20260826-1"></script>'
+          if tag not in s:
+              needle='<script src="forgot-password.js?v=20260826-1"></script>'
+              if needle in s:
+                  s=s.replace(needle, needle+'\n'+tag)
+              else:
+                  s=s.replace('</body>', tag+'\n</body>')
+              p.write_text(s)
+          PY
+      - name: Commit website change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            git add index.html
+            git commit -m "Enable real AI Chat workspace"
+            git push
+          fi
