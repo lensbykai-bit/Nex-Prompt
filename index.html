@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#080712">
 <title>Nex Prompt — AI Creator Marketplace</title>
 <meta name="description" content="Prompt marketplace, AI tools and shared credits for creators.">
-<link rel="stylesheet" href="app.css?v=20260826-1">
+<link rel="stylesheet" href="app.css?v=20260826-2">
 </head>
 <body>
 <header class="topbar">
@@ -65,9 +65,44 @@
 <dialog class="modal" id="promptModal"><div class="modal-card modal-wide"><button class="close" type="button" data-close="#promptModal">×</button><div class="prompt-detail"><div class="prompt-preview" id="promptPreview"></div><div class="prompt-info"><h2 id="promptTitle"></h2><p id="promptDesc"></p><div class="credit-price" id="promptPrice"></div><p>Full prompt is protected until purchase.</p><button class="btn btn-primary" id="addCartBtn" type="button">Add to Cart</button></div></div></div></dialog>
 <dialog class="modal" id="cartModal"><div class="modal-card"><button class="close" type="button" data-close="#cartModal">×</button><h2>Your Cart</h2><div id="cartItems"></div><div class="cart-total"><span>Total</span><strong id="cartTotal">$0.00</strong></div><button class="btn btn-primary" id="checkoutPromptBtn" type="button" style="width:100%">Checkout</button></div></dialog>
 <dialog class="modal" id="toolModal"><div class="modal-card"><button class="close" type="button" data-close="#toolModal">×</button><div class="tool-icon">✦</div><h2 id="toolWorkspaceTitle">AI Tool</h2><p class="section-lead" id="toolWorkspaceText"></p><button class="btn btn-primary" type="button" data-route="credits">Get Credits</button></div></dialog>
-<dialog class="modal" id="paymentModal"><div class="modal-card payment-center"><button class="close" type="button" data-close="#paymentModal">×</button><div class="eyebrow">BAKONG · KHQR</div><h2 id="payTitle">Payment</h2><div class="amount" id="payAmount">$0.00</div><div class="qr-box" id="qrBox"></div><div class="status show success" id="payStatus">Waiting for payment…</div><div class="payment-actions"><button class="btn btn-primary" id="checkPaymentBtn" type="button">Check payment</button><button class="btn btn-secondary" type="button" data-close="#paymentModal">Close</button></div></div></dialog>
+<dialog class="modal" id="paymentModal"><div class="modal-card payment-center"><button class="close" type="button" data-close="#paymentModal">×</button><div class="eyebrow">BAKONG · KHQR</div><h2 id="payTitle">Payment</h2><div class="amount" id="payAmount">$0.00</div><p id="payHelp" style="color:#a99eac;font-size:12px;margin:7px 0 12px">Scan with Bakong or a supported banking app</p><div class="qr-box" id="qrBox"><div style="color:#655b66;font-size:12px">QR will appear here</div></div><div id="payMeta" style="display:flex;justify-content:center;gap:18px;color:#9b8f9d;font-size:10px;margin:9px 0"><span>Bakong KHQR</span><span id="payCountdown">10:00</span></div><div class="status show success" id="payStatus">Waiting for payment…</div><div class="payment-actions"><button class="btn btn-primary" id="checkPaymentBtn" type="button">Check payment</button><button class="btn btn-secondary" type="button" data-close="#paymentModal">Close</button></div></div></dialog>
 <div class="toast" id="toast"></div>
-<script src="app.js?v=20260826-3"></script>
-<script src="payment-ui.js?v=20260826-1"></script>
+<script src="app.js?v=20260826-4"></script>
+<script>
+(function(){
+'use strict';
+var API='https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/khqr-image';
+var box=document.getElementById('qrBox'),modal=document.getElementById('paymentModal'),status=document.getElementById('payStatus'),check=document.getElementById('checkPaymentBtn'),count=document.getElementById('payCountdown');
+if(!box||!modal)return;
+var autoTimer=null,countTimer=null,expires=0,currentPayload='';
+function isKH(){return localStorage.getItem('nex_prompt_lang')==='KH'}
+function isPaid(){var t=String(status&&status.textContent||'').toLowerCase();return t.indexOf('payment confirmed')>=0||t.indexOf('ទូទាត់ជោគជ័យ')>=0||t.indexOf('បានជោគជ័យ')>=0}
+function renderRaw(){
+  if(box.querySelector('img'))return;
+  var raw=(box.textContent||'').trim();
+  if(!raw||raw.length<30||raw==='QR will appear here'||raw.indexOf('កំពុងបង្កើត')>=0||raw.indexOf('Generating QR')>=0)return;
+  if(raw===currentPayload)return;
+  currentPayload=raw;
+  box.innerHTML='<div style="color:#655b66;font-size:12px">'+(isKH()?'កំពុងបង្កើត QR…':'Generating QR…')+'</div>';
+  var img=new Image();
+  img.alt='Bakong KHQR';
+  img.style.width='100%';img.style.height='100%';img.style.objectFit='contain';img.style.display='block';
+  img.onload=function(){box.innerHTML='';box.appendChild(img)};
+  img.onerror=function(){box.innerHTML='<div style="color:#8b405b;font-size:12px;line-height:1.5;padding:16px">'+(isKH()?'មិនអាចបង្ហាញ QR បាន។ សូមបិទ ហើយបង្កើតការទូទាត់ថ្មី។':'Could not load QR. Close and create a new payment.')+'</div>'};
+  img.src=API+'?text='+encodeURIComponent(raw)+'&v='+Date.now();
+}
+new MutationObserver(function(){setTimeout(renderRaw,0)}).observe(box,{childList:true,subtree:true,characterData:true});
+function startCountdown(){
+ clearInterval(countTimer);expires=Date.now()+10*60*1000;
+ function tick(){var left=Math.max(0,expires-Date.now()),sec=Math.ceil(left/1000),m=Math.floor(sec/60),s=sec%60;if(count)count.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');if(left<=0){clearInterval(countTimer);stopAuto()}}
+ tick();countTimer=setInterval(tick,1000);
+}
+function startAuto(){stopAuto();autoTimer=setInterval(function(){if(!modal.open){stopAuto();return}if(isPaid()){stopAuto();return}if(check&&!check.disabled)check.click()},5000)}
+function stopAuto(){if(autoTimer){clearInterval(autoTimer);autoTimer=null}}
+new MutationObserver(function(ms){ms.forEach(function(m){if(m.attributeName==='open'){if(modal.open){currentPayload='';setTimeout(renderRaw,30);startCountdown();startAuto()}else stopAuto()}})}).observe(modal,{attributes:true,attributeFilter:['open']});
+if(status)new MutationObserver(function(){if(isPaid()){stopAuto();clearInterval(countTimer);if(count)count.textContent=isKH()?'បានបង់':'PAID';if(check){check.disabled=true;check.textContent=isKH()?'បានបញ្ជាក់ការទូទាត់':'Payment confirmed'}}}).observe(status,{childList:true,subtree:true,characterData:true});
+modal.addEventListener('close',function(){stopAuto();clearInterval(countTimer)});
+})();
+</script>
 </body>
 </html>
