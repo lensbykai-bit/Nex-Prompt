@@ -1,4 +1,4 @@
-name: Remove AI Tools UI
+name: NEXORA Prompt Sales Focus
 on:
   push:
     branches: [main]
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Remove AI Tools UI
+      - name: Focus NEXORA Ai on Prompt sales
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -18,26 +18,65 @@ jobs:
 
           p=Path('index.html')
           s=p.read_text()
-          s=s.replace('<meta name="description" content="NEXORA Ai prompt marketplace and AI tools for creators.">','<meta name="description" content="NEXORA Ai prompt marketplace for creators.">')
+          # Keep AI Tools removed
           s=s.replace('<a href="#tools" data-route="tools" data-t="AI Tools">AI Tools</a>\n','')
-          s=s.replace('<a class="home-card" href="#tools" data-route="tools"><div class="icon">✦</div><h3>AI Tools Workspace</h3><p>One member account for AI Image, Video, Voice and Dubbing.</p><span class="link-pink">Open tools →</span></a>\n','')
-          s=s.replace('<div class="stat"><strong>AI</strong><span>Tools</span></div>','<div class="stat"><strong>7 DAYS</strong><span>Access</span></div>')
-          s=s.replace('<p class="section-lead">Start with prompts, create one account, and use NEXORA Ai Tools from one workspace.</p>','<p class="section-lead">Choose a Prompt, purchase securely, and access it from My Prompts.</p>')
-          s=s.replace('<p>Browse Prompt or select an AI Tool.</p>','<p>Browse and choose the Prompt you want.</p>')
-          s=s.replace('<p>Use your purchased prompt and creator tools.</p>','<p>Open your purchased Prompt from My Prompts.</p>')
           s=re.sub(r'<section class="view" id="toolsView" data-view="tools">.*?</section>\n','',s,flags=re.S)
           s=re.sub(r'<dialog class="modal" id="toolModal">.*?</dialog>\n','',s,flags=re.S)
+
+          # Sales-focused storefront
+          s=s.replace('<title>NEXORA Ai — AI Creator Marketplace</title>','<title>NEXORA Ai — Premium Prompt Marketplace</title>')
+          s=s.replace('<meta name="description" content="NEXORA Ai prompt marketplace for creators.">','<meta name="description" content="Shop premium AI image-to-video prompts on NEXORA Ai. Pay securely with Bakong KHQR and unlock instantly.">')
+          s=s.replace('<div class="eyebrow">✦ AI IMAGE TO VIDEO PROMPT MARKETPLACE</div>','<div class="eyebrow">✦ PREMIUM AI VIDEO PROMPTS · INSTANT UNLOCK</div>')
+          s=s.replace('<h1>Turn your images<br>into <span>cinematic</span><br>stories</h1>','<h1>Premium prompts<br>made to help your<br><span>content stand out</span></h1>')
+          s=s.replace('<p>Premium prompts for creators who want smoother motion, better camera direction and faster AI-video results.</p>','<p>Choose a ready-to-use image-to-video prompt, pay securely with Bakong KHQR, and unlock the full prompt immediately after payment.</p>')
+          s=s.replace('<div class="stats"><div class="stat"><strong>10K+</strong><span>Creators</span></div><div class="stat"><strong>50K+</strong><span>Prompts</span></div><div class="stat"><strong>7 DAYS</strong><span>Access</span></div><div class="stat"><strong>KHQR</strong><span>Payments</span></div></div>','<div class="stats"><div class="stat"><strong>INSTANT</strong><span>Unlock</span></div><div class="stat"><strong>7 DAYS</strong><span>Full Access</span></div><div class="stat"><strong>KHQR</strong><span>Secure Payment</span></div><div class="stat"><strong>BUY AGAIN</strong><span>Anytime</span></div></div>')
+          s=s.replace('<div class="hero-actions"><button class="btn btn-primary" type="button" data-route="prompt">Explore Prompts</button><button class="btn btn-secondary" type="button" data-route="how">▶ How it works</button></div>','<div class="hero-actions"><button class="btn btn-primary sales-primary" type="button" data-route="prompt">Shop Prompts →</button><button class="btn btn-secondary" type="button" data-route="how">How to Buy</button></div>')
+
+          old='''<div class="home-cards">\n<a class="home-card" href="#prompt" data-route="prompt"><div class="icon">▧</div><h3>Prompt Marketplace</h3><p>Premium image-to-video prompts for cinematic content, product ads and creators.</p><span class="link-pink">Browse prompts →</span></a>\n</div>'''
+          new='''<div class="trust-strip">
+<div class="trust-item"><span>⚡</span><div><b>Instant Unlock</b><small>Full prompt opens after confirmed payment</small></div></div>
+<div class="trust-item"><span>✓</span><div><b>7 Days Access</b><small>Open purchased prompts from My Prompts</small></div></div>
+<div class="trust-item"><span>▣</span><div><b>Bakong KHQR</b><small>Simple secure payment in Cambodia</small></div></div>
+<div class="trust-item"><span>↻</span><div><b>Buy Again Anytime</b><small>Purchase again whenever you need access</small></div></div>
+</div>
+<div class="sales-panel">
+<div><span class="sales-badge">READY TO CREATE</span><h2>Find a prompt. Pay. Unlock. Create.</h2><p>Browse by category, preview the style, and use Pay Now for the fastest checkout. Your purchased prompt is saved inside My Prompts.</p></div>
+<button class="btn btn-primary sales-cta" type="button" data-route="prompt">Browse Prompt Marketplace →</button>
+</div>
+<div class="home-cards">
+<a class="home-card featured-shop" href="#prompt" data-route="prompt"><div class="icon">▧</div><h3>Shop Premium Prompts</h3><p>Ready-to-use prompts for cinematic videos, product ads, nature scenes, sci-fi, fantasy and more.</p><span class="link-pink">View all prompts →</span></a>
+</div>'''
+          s=s.replace(old,new)
+          s=s.replace('<div class="page-head"><div><h1>Prompt Marketplace</h1><p>Image-to-video prompts ready for cinematic motion, ads, nature, sci-fi and more.</p></div></div>','<div class="page-head"><div><span class="sales-badge">PROMPT STORE</span><h1>Shop Prompts</h1><p>Choose the style you want, preview it, then use Pay Now or Add to Cart. Full prompt unlocks after confirmed payment.</p></div></div>')
+          s=s.replace('<p>Full prompt is protected until purchase.</p>','<p>Buy once to unlock the full prompt for 7 days. You can purchase it again anytime.</p>')
           p.write_text(s)
 
           p=Path('app.js')
           s=p.read_text()
           s=s.replace("'AI Tools':['AI Tools','AI Tools'],\n",'')
           s=s.replace("'Open AI Tools':['Open AI Tools','បើក AI Tools'],\n",'')
-          s=s.replace("account.innerHTML='<div class=\"account-avatar\">N</div><h3 id=\"accountName\">My account</h3><p class=\"auth-help\" id=\"accountEmail\"></p><div class=\"account-actions\"><button class=\"btn btn-primary\" id=\"accountToolsBtn\" type=\"button\">Open AI Tools</button></div><button class=\"auth-danger\" id=\"accountSignOutBtn\" type=\"button\">Sign out</button>';","account.innerHTML='<div class=\"account-avatar\">N</div><h3 id=\"accountName\">My account</h3><p class=\"auth-help\" id=\"accountEmail\"></p><button class=\"auth-danger\" id=\"accountSignOutBtn\" type=\"button\">Sign out</button>';")
           s=s.replace("if($('#accountToolsBtn'))$('#accountToolsBtn').textContent=tr('Open AI Tools');",'')
           s=s.replace("on('#accountToolsBtn','click',function(){closeModal('#authModal');route('tools')});",'')
           s=re.sub(r"function openTool\(name\)\{.*?\}\nfunction refreshBalance",'function refreshBalance',s,flags=re.S)
           s=s.replace("var tool=e.target.closest('[data-tool]');if(tool){openTool(tool.getAttribute('data-tool'));return}",'')
+          p.write_text(s)
+
+          p=Path('app.css')
+          s=p.read_text()
+          marker='/* SALES FOCUS V1 */'
+          if marker not in s:
+            s += '''\n\n/* SALES FOCUS V1 */
+.sales-primary{padding-left:26px;padding-right:26px;box-shadow:0 16px 36px rgba(255,59,152,.28)}
+.trust-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:8px 0 26px}
+.trust-item{display:flex;align-items:center;gap:12px;min-height:92px;padding:16px 17px;border:1px solid #3b243e;border-radius:17px;background:linear-gradient(145deg,#0f0b17,#15101d)}
+.trust-item>span{flex:0 0 38px;width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#271225;color:#ff69b3;font-weight:900}
+.trust-item b{display:block;font-size:13px}.trust-item small{display:block;margin-top:5px;color:#958b99;line-height:1.45;font-size:10px}
+.sales-panel{display:flex;align-items:center;justify-content:space-between;gap:28px;margin:12px 0 24px;padding:28px 30px;border:1px solid #6b2850;border-radius:22px;background:radial-gradient(circle at 15% 10%,rgba(255,59,152,.16),transparent 42%),linear-gradient(135deg,#130b18,#0d0a14)}
+.sales-panel h2{margin:9px 0 8px;font-size:30px}.sales-panel p{max-width:760px;margin:0;color:#a89daa;line-height:1.7;font-size:13px}.sales-badge{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid #6d2b55;border-radius:999px;background:#241022;color:#ff7fbc;font-size:9px;font-weight:900;letter-spacing:.08em}
+.sales-cta{white-space:nowrap;min-width:235px}.featured-shop{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr auto;align-items:center;column-gap:18px;padding:23px 26px}.featured-shop .icon{grid-row:1/3}.featured-shop h3{margin:0 0 5px}.featured-shop p{margin:0}.featured-shop .link-pink{grid-column:3;grid-row:1/3;margin:0;font-size:13px}.page-head .sales-badge{margin-bottom:10px}.page-head .sales-badge+h1{margin-top:0}
+@media(max-width:900px){.trust-strip{grid-template-columns:repeat(2,1fr)}.sales-panel{align-items:flex-start;flex-direction:column}.sales-cta{width:100%}.featured-shop{grid-template-columns:auto 1fr}.featured-shop .link-pink{grid-column:2;grid-row:auto;margin-top:10px}}
+@media(max-width:560px){.trust-strip{grid-template-columns:1fr}.trust-item{min-height:auto}.sales-panel{padding:22px 18px}.sales-panel h2{font-size:25px}.featured-shop{display:block}.featured-shop .icon{margin-bottom:14px}.featured-shop .link-pink{display:block;margin-top:12px}}
+'''
           p.write_text(s)
           PY
       - name: Commit changes
@@ -45,6 +84,6 @@ jobs:
           if git diff --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html app.js
-          git commit -m "Temporarily remove AI Tools UI"
+          git add index.html app.js app.css
+          git commit -m "Focus NEXORA Ai on Prompt sales"
           git push
