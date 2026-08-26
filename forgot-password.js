@@ -19,7 +19,8 @@ function requestReset(){
 }
 
 var thankTimer=null;
-var lastPaidText='';
+var lastPaidKey='';
+var paidPoll=null;
 function ensureThankDialog(){
   var d=$('#thankYouModal');
   if(d)return d;
@@ -62,31 +63,37 @@ function showThankYou(){
   }
   try{if(!d.open)d.showModal()}catch(e){d.setAttribute('open','')}
 }
-function isPaidStatus(){
-  var s=$('#payStatus');
-  var t=String(s&&s.textContent||'').trim();
-  var low=t.toLowerCase();
-  return {paid:low.indexOf('payment confirmed')>=0||t.indexOf('ទូទាត់ជោគជ័យ')>=0||t.indexOf('ការទូទាត់បានជោគជ័យ')>=0,text:t};
+function paidSignal(){
+  var status=String((($('#payStatus')||{}).textContent)||'').trim();
+  var button=String((($('#checkPaymentBtn')||{}).textContent)||'').trim();
+  var all=(status+' '+button).toLowerCase();
+  var paid=all.indexOf('payment confirmed')>=0||all.indexOf('payment successful')>=0||status.indexOf('ទូទាត់ជោគជ័យ')>=0||status.indexOf('ការទូទាត់បានជោគជ័យ')>=0||button.indexOf('ទូទាត់ជោគជ័យ')>=0;
+  return {paid:paid,key:status+'|'+button};
+}
+function triggerThankYou(){
+  var payment=$('#paymentModal');
+  var r=paidSignal();
+  if(!payment||!payment.open||!r.paid)return;
+  if(r.key===lastPaidKey&&thankTimer)return;
+  lastPaidKey=r.key;
+  clearTimeout(thankTimer);
+  thankTimer=setTimeout(function(){
+    try{if(payment.open)payment.close()}catch(e){payment.removeAttribute('open')}
+    setTimeout(showThankYou,180);
+    thankTimer=null;
+  },700);
 }
 function watchPayment(){
   var status=$('#payStatus');
   var payment=$('#paymentModal');
-  if(!status||!payment)return;
-  function checkPaid(){
-    var r=isPaidStatus();
-    if(!r.paid)return;
-    if(r.text===lastPaidText&&thankTimer)return;
-    lastPaidText=r.text;
-    clearTimeout(thankTimer);
-    thankTimer=setTimeout(function(){
-      try{if(payment.open)payment.close()}catch(e){payment.removeAttribute('open')}
-      setTimeout(showThankYou,180);
-      thankTimer=null;
-    },900);
-  }
-  new MutationObserver(checkPaid).observe(status,{childList:true,subtree:true,characterData:true});
-  new MutationObserver(function(ms){ms.forEach(function(m){if(m.attributeName==='open'&&payment.open){lastPaidText='';clearTimeout(thankTimer);thankTimer=null}})}).observe(payment,{attributes:true,attributeFilter:['open']});
-  checkPaid();
+  var btn=$('#checkPaymentBtn');
+  if(!payment)return;
+  if(status)new MutationObserver(triggerThankYou).observe(status,{childList:true,subtree:true,characterData:true});
+  if(btn)new MutationObserver(triggerThankYou).observe(btn,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','disabled']});
+  new MutationObserver(function(ms){ms.forEach(function(m){if(m.attributeName==='open'){if(payment.open){lastPaidKey='';clearTimeout(thankTimer);thankTimer=null;triggerThankYou()}else{lastPaidKey=''}}})}).observe(payment,{attributes:true,attributeFilter:['open']});
+  clearInterval(paidPoll);
+  paidPoll=setInterval(function(){if(payment.open)triggerThankYou()},350);
+  triggerThankYou();
 }
 
 function enableOutsideClose(){
