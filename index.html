@@ -42,7 +42,7 @@
 </div>
 <div class="home-cards">
 <a class="home-card" href="#prompt" data-route="prompt"><div class="icon">▧</div><h3>Prompt Marketplace</h3><p>Premium image-to-video prompts for cinematic content, product ads and creators.</p><span class="link-pink">Browse prompts →</span></a>
-<a class="home-card" href="#tools" data-route="tools"><div class="icon">✦</div><h3>AI Tools Workspace</h3><p>One member account for AI Chat, Image, Video, Voice and Dubbing.</p><span class="link-pink">Open tools →</span></a>
+<a class="home-card" href="#tools" data-route="tools"><div class="icon">✦</div><h3>AI Tools Workspace</h3><p>One member account for AI Image, Video, Voice and Dubbing.</p><span class="link-pink">Open tools →</span></a>
 <a class="home-card" href="#credits" data-route="credits"><div class="icon">◆</div><h3>Shared Credit Wallet</h3><p>Top up with Bakong KHQR and use the same wallet across supported AI tools.</p><span class="link-pink">Buy credits →</span></a>
 </div>
 <div class="section" id="howSection"><h2>How it works</h2><p class="section-lead">Start with prompts, create one account for AI Tools, and add credits only when you need them.</p><div class="how-grid"><div class="how-card"><b>01</b><h3>Choose</h3><p>Browse Prompt or select an AI Tool.</p></div><div class="how-card"><b>02</b><h3>Pay</h3><p>Buy Prompt or Credits securely using Bakong KHQR.</p></div><div class="how-card"><b>03</b><h3>Create</h3><p>Use your purchased prompt or shared credit wallet.</p></div></div></div>
@@ -53,8 +53,8 @@
 <div class="prompt-grid" id="promptGrid"><div class="empty">Loading prompts…</div></div>
 </section>
 <section class="view" id="toolsView" data-view="tools">
-<div class="page-head"><div><h1>AI Tools Workspace</h1><p>Sign in once. AI Chat is FREE; other supported tools use your shared Credits.</p></div><button class="wallet" id="walletBalance" type="button">Sign in</button></div>
-<div class="tools-grid"><button class="tool-card" type="button" data-tool="AI Chat"><div class="tool-icon">✦</div><h3>AI Chat</h3><p>Ask, write, summarize and brainstorm from one workspace.</p><span class="cost">FREE</span></button><button class="tool-card" type="button" data-tool="AI Image"><div class="tool-icon">▧</div><h3>AI Image</h3><p>Create visuals for social posts, ads and creative projects.</p><span class="cost">10–30 credits/image</span></button><button class="tool-card" type="button" data-tool="AI Video"><div class="tool-icon">▶</div><h3>AI Video</h3><p>Turn text or images into short AI video generations.</p><span class="cost">150–300+ credits/video</span></button><button class="tool-card" type="button" data-tool="AI Voice"><div class="tool-icon">♪</div><h3>AI Voice</h3><p>Generate natural voiceovers for scripts and creator content.</p><span class="cost">20–40 credits/min</span></button><button class="tool-card" type="button" data-tool="AI Dubbing"><div class="tool-icon">◎</div><h3>AI Dubbing</h3><p>Translate and dub creator videos using a shared wallet.</p><span class="cost">110+ credits/min</span></button></div>
+<div class="page-head"><div><h1>AI Tools Workspace</h1><p>Sign in once, then use your shared Credits across supported AI tools.</p></div><button class="wallet" id="walletBalance" type="button">Sign in</button></div>
+<div class="tools-grid"><button class="tool-card" type="button" data-tool="AI Image"><div class="tool-icon">▧</div><h3>AI Image</h3><p>Create visuals for social posts, ads and creative projects.</p><span class="cost">10–30 credits/image</span></button><button class="tool-card" type="button" data-tool="AI Video"><div class="tool-icon">▶</div><h3>AI Video</h3><p>Turn text or images into short AI video generations.</p><span class="cost">150–300+ credits/video</span></button><button class="tool-card" type="button" data-tool="AI Voice"><div class="tool-icon">♪</div><h3>AI Voice</h3><p>Generate natural voiceovers for scripts and creator content.</p><span class="cost">20–40 credits/min</span></button><button class="tool-card" type="button" data-tool="AI Dubbing"><div class="tool-icon">◎</div><h3>AI Dubbing</h3><p>Translate and dub creator videos using a shared wallet.</p><span class="cost">110+ credits/min</span></button></div>
 </section>
 <section class="view" id="creditsView" data-view="credits">
 <div class="page-head"><div><h1>Buy AI Credits</h1><p>Top up your shared wallet with Bakong KHQR and use credits in NEXORA Ai Tools.</p></div><button class="wallet" id="creditPageBalance" type="button">Shared Wallet</button></div>
@@ -69,7 +69,6 @@
 <div class="toast" id="toast"></div>
 <script src="app.js?v=20260826-4"></script>
 <script src="forgot-password.js?v=20260826-1"></script>
-<script src="ai-chat-ui.js?v=20260826-2"></script>
 <script>
 (function(){
 'use strict';
