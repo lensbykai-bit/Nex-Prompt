@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 220" role="img" aria-labelledby="title desc">
+<title id="title">NEXORA Ai</title>
+<desc id="desc">Futuristic neon NEXORA Ai logo</desc>
+<defs>
+  <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#24d8ff"/><stop offset=".48" stop-color="#8b5cff"/><stop offset="1" stop-color="#ff3f9f"/></linearGradient>
+  <linearGradient id="g2" x1="0" x2="1"><stop offset="0" stop-color="#f7fbff"/><stop offset=".55" stop-color="#cfdcff"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+  <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="13"/></filter>
+</defs>
+<g transform="translate(16 13)">
+  <ellipse cx="104" cy="97" rx="95" ry="92" fill="none" stroke="#213076" stroke-width="10" opacity=".65"/>
+  <ellipse cx="104" cy="97" rx="87" ry="84" fill="none" stroke="url(#g1)" stroke-width="3" opacity=".95" filter="url(#glow)"/>
+  <path d="M47 156V42h29l61 70V42h31v114h-28L78 86v70z" fill="url(#g2)" stroke="#6d78ff" stroke-width="3" filter="url(#glow)"/>
+  <path d="M14 142C74 95 135 68 194 55" fill="none" stroke="#ff3f9f" stroke-width="6" stroke-linecap="round" filter="url(#glow)"/>
+  <path d="M18 147C84 118 145 95 202 50" fill="none" stroke="#2bd9ff" stroke-width="3" stroke-linecap="round" opacity=".9"/>
+</g>
+<g transform="translate(222 0)">
+  <text x="0" y="128" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="80" font-weight="900" letter-spacing="2" fill="url(#g2)" stroke="#3944a8" stroke-width="1">NEXORA</text>
+  <text x="405" y="132" font-family="Segoe Script,Brush Script MT,cursive" font-size="86" font-style="italic" font-weight="700" fill="#ff4aa8" filter="url(#glow)">Ai</text>
+  <g transform="translate(278 82)" filter="url(#glow)"><path d="M0-13L4-4L13 0L4 4L0 13L-4 4L-13 0L-4-4z" fill="#2ee6ff"/></g>
+  <text x="4" y="171" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14" font-weight="700" letter-spacing="8" fill="#d9ddff">CREATE • INSPIRE • GROW</text>
+  <rect x="0" y="187" width="444" height="26" rx="13" fill="#120d25" stroke="url(#g1)" stroke-width="1.5"/>
+  <text x="25" y="205" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="11" font-weight="800" letter-spacing="3" fill="#cbd3ff">PREMIUM PROMPTS • CREATIVE POWER</text>
+</g>
+</svg>
