@@ -2,12 +2,15 @@
 'use strict';
 var STORE='https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/store-api';
 var RESET='https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/password-reset';
+var REFRESH='https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/auth-refresh';
 function $(s){return document.querySelector(s)}
 function $$(s){return Array.prototype.slice.call(document.querySelectorAll(s))}
 function isKH(){return localStorage.getItem('nex_prompt_lang')==='KH'}
 function getSession(){try{return JSON.parse(localStorage.getItem('nex_cloud_session')||'null')}catch(e){return null}}
 function getCart(){try{var x=JSON.parse(localStorage.getItem('nex_cart_cloud')||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
-function authFetch(action,opt){opt=opt||{};var s=getSession();var h={'Content-Type':'application/json'};if(s&&s.access_token)h.Authorization='Bearer '+s.access_token;var url=STORE+'?action='+encodeURIComponent(action)+(opt.query||'');return fetch(url,{method:opt.method||'GET',headers:h,body:opt.body?JSON.stringify(opt.body):undefined}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok)throw new Error(d.error||'Request failed');return d})})}
+function saveSession(s){try{if(s)localStorage.setItem('nex_cloud_session',JSON.stringify(s));else localStorage.removeItem('nex_cloud_session')}catch(e){}}
+function refreshSession(){var current=getSession();if(!current||!current.refresh_token)return Promise.reject(new Error(isKH()?'Session បានផុតកំណត់។ សូមចូលគណនីម្ដងទៀត។':'Session expired. Please sign in again.'));return fetch(REFRESH,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({refresh_token:current.refresh_token})}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok||!d.session||!d.session.access_token)throw new Error(d.error||'Session expired. Please sign in again.');if(!d.session.email&&current.email)d.session.email=current.email;saveSession(d.session);return d.session})}).catch(function(err){saveSession(null);throw err})}
+function authFetch(action,opt){opt=opt||{};function run(canRefresh){var s=getSession();var h={'Content-Type':'application/json'};if(s&&s.access_token)h.Authorization='Bearer '+s.access_token;var url=STORE+'?action='+encodeURIComponent(action)+(opt.query||'');return fetch(url,{method:opt.method||'GET',headers:h,body:opt.body?JSON.stringify(opt.body):undefined}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(r.status===401&&canRefresh&&s&&s.refresh_token){return refreshSession().then(function(){return run(false)})}if(!r.ok)throw new Error(d.error||'Request failed');return d})})}return run(true)}
 function setAuthStatus(msg,type){var el=$('#authStatus');if(!el)return;el.textContent=msg||'';el.className='status'+(msg?' show '+(type||'error'):'')}
 function isSignin(){var tab=$('.auth-tab[data-mode="signin"]');var form=$('#authForm');return !!(tab&&tab.classList.contains('active')&&form&&!form.hidden)}
 function syncForgot(){var row=$('#forgotPasswordRow');var btn=$('#forgotPasswordBtn');if(!row||!btn)return;row.style.display=isSignin()?'flex':'none';btn.textContent=isKH()?'ភ្លេចពាក្យសម្ងាត់?':'Forgot password?'}
