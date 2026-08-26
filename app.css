@@ -6,3 +6,7 @@
 .prompt-tag,.play{z-index:5}
 #qrBox::before,#qrBox::after,.qr-box::before,.qr-box::after{content:none!important;display:none!important}
 @media(max-width:560px){.prompt-img::after,.prompt-preview::after,.gallery .tile::after,.thumb::after{right:7px;bottom:7px;font-size:9px;padding:5px 7px}.prompt-img::before,.prompt-preview::before,.gallery .tile::before,.thumb::before{background-size:220px 98px}}
+
+
+/* NEXORA Ai direct Pay Now */
+.prompt-buy-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:6px}.prompt-buy-actions .btn{flex:1;min-width:150px}.prompt-buy-actions #buyNowBtn{border-color:#ff58b0;color:#fff;background:linear-gradient(135deg,rgba(255,49,150,.18),rgba(173,76,240,.16))}.prompt-buy-actions #buyNowBtn:hover{background:linear-gradient(135deg,rgba(255,49,150,.32),rgba(173,76,240,.28))}@media(max-width:640px){.prompt-buy-actions{display:grid;grid-template-columns:1fr}.prompt-buy-actions .btn{width:100%}}
