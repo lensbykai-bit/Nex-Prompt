@@ -1,0 +1,22 @@
+/* NEXORA Ai — Prompt sales focused storefront */
+.sales-primary{padding-left:26px;padding-right:26px;box-shadow:0 16px 36px rgba(255,59,152,.28)}
+.trust-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:8px 0 26px}
+.trust-item{display:flex;align-items:center;gap:12px;min-height:92px;padding:16px 17px;border:1px solid #3b243e;border-radius:17px;background:linear-gradient(145deg,#0f0b17,#15101d)}
+.trust-item>span{flex:0 0 38px;width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#271225;color:#ff69b3;font-weight:900}
+.trust-item b{display:block;font-size:13px}
+.trust-item small{display:block;margin-top:5px;color:#958b99;line-height:1.45;font-size:10px}
+.sales-panel{display:flex;align-items:center;justify-content:space-between;gap:28px;margin:12px 0 24px;padding:28px 30px;border:1px solid #6b2850;border-radius:22px;background:radial-gradient(circle at 15% 10%,rgba(255,59,152,.16),transparent 42%),linear-gradient(135deg,#130b18,#0d0a14)}
+.sales-panel h2{margin:9px 0 8px;font-size:30px}
+.sales-panel p{max-width:760px;margin:0;color:#a89daa;line-height:1.7;font-size:13px}
+.sales-badge{display:inline-flex;align-items:center;padding:6px 10px;border:1px solid #6d2b55;border-radius:999px;background:#241022;color:#ff7fbc;font-size:9px;font-weight:900;letter-spacing:.08em}
+.sales-cta{white-space:nowrap;min-width:235px}
+.featured-shop{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr auto;align-items:center;column-gap:18px;padding:23px 26px}
+.featured-shop .icon{grid-row:1/3}
+.featured-shop h3{margin:0 0 5px}
+.featured-shop p{margin:0}
+.featured-shop .link-pink{grid-column:3;grid-row:1/3;margin:0;font-size:13px}
+.page-head .sales-badge{margin-bottom:10px}
+.page-head .sales-badge+h1{margin-top:0}
+.prompt-buy-note{margin:10px 0 0;padding:10px 12px;border:1px solid #3d293f;border-radius:12px;background:#120c17;color:#a99eac;font-size:11px;line-height:1.55}
+@media(max-width:900px){.trust-strip{grid-template-columns:repeat(2,1fr)}.sales-panel{align-items:flex-start;flex-direction:column}.sales-cta{width:100%}.featured-shop{grid-template-columns:auto 1fr}.featured-shop .link-pink{grid-column:2;grid-row:auto;margin-top:10px}}
+@media(max-width:560px){.trust-strip{grid-template-columns:1fr}.trust-item{min-height:auto}.sales-panel{padding:22px 18px}.sales-panel h2{font-size:25px}.featured-shop{display:block}.featured-shop .icon{margin-bottom:14px}.featured-shop .link-pink{display:block;margin-top:12px}}
