@@ -1,0 +1,53 @@
+name: Remove AI Credits UI
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove AI credits UI
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('<meta name="description" content="NEXORA Ai prompt marketplace, AI tools and shared credits for creators.">','<meta name="description" content="NEXORA Ai prompt marketplace and AI tools for creators.">')
+          s=s.replace('<a href="#credits" data-route="credits" data-t="Credits">Credits</a>\n','')
+          s=s.replace('<a class="home-card" href="#credits" data-route="credits"><div class="icon">◆</div><h3>Shared Credit Wallet</h3><p>Top up with Bakong KHQR and use the same wallet across supported AI tools.</p><span class="link-pink">Buy credits →</span></a>\n','')
+          s=s.replace('<p class="section-lead">Start with prompts, create one account for AI Tools, and add credits only when you need them.</p>','<p class="section-lead">Start with prompts, create one account, and use NEXORA Ai Tools from one workspace.</p>')
+          s=s.replace('<p>Buy Prompt or Credits securely using Bakong KHQR.</p>','<p>Buy Prompt securely using Bakong KHQR.</p>')
+          s=s.replace('<p>Use your purchased prompt or shared credit wallet.</p>','<p>Use your purchased prompt and creator tools.</p>')
+          s=s.replace('<div class="page-head"><div><h1>AI Tools Workspace</h1><p>Sign in once, then use your shared Credits across supported AI tools.</p></div><button class="wallet" id="walletBalance" type="button">Sign in</button></div>','<div class="page-head"><div><h1>AI Tools Workspace</h1><p>Sign in once, then use supported AI tools from one workspace.</p></div></div>')
+          s=re.sub(r'<span class="cost">[^<]*credits(?:/image|/video|/min)?</span>','<span class="cost">Coming soon</span>',s,flags=re.I)
+          s=re.sub(r'<section class="view" id="creditsView" data-view="credits">.*?</section>\n','',s,flags=re.S)
+          s=s.replace('<button class="btn btn-primary" type="button" data-route="credits">Get Credits</button>','')
+          p.write_text(s)
+
+          p=Path('app.js')
+          s=p.read_text()
+          s=s.replace("'Credits':['Credits','Credits'],\n",'')
+          s=s.replace("'Buy Credits':['Buy Credits','ទិញ Credits'],\n",'')
+          s=s.replace("account.innerHTML='<div class=\"account-avatar\">N</div><h3 id=\"accountName\">My account</h3><p class=\"auth-help\" id=\"accountEmail\"></p><div class=\"account-actions\"><button class=\"btn btn-primary\" id=\"accountToolsBtn\" type=\"button\">Open AI Tools</button><button class=\"btn btn-secondary\" id=\"accountCreditsBtn\" type=\"button\">Buy Credits</button></div><button class=\"auth-danger\" id=\"accountSignOutBtn\" type=\"button\">Sign out</button>';","account.innerHTML='<div class=\"account-avatar\">N</div><h3 id=\"accountName\">My account</h3><p class=\"auth-help\" id=\"accountEmail\"></p><div class=\"account-actions\"><button class=\"btn btn-primary\" id=\"accountToolsBtn\" type=\"button\">Open AI Tools</button></div><button class=\"auth-danger\" id=\"accountSignOutBtn\" type=\"button\">Sign out</button>';")
+          s=s.replace("if($('#accountCreditsBtn'))$('#accountCreditsBtn').textContent=tr('Buy Credits');",'')
+          s=s.replace("function openTool(name){if(!ensureLogin())return;if($('#toolWorkspaceTitle'))$('#toolWorkspaceTitle').textContent=name;if($('#toolWorkspaceText'))$('#toolWorkspaceText').textContent=state.lang==='KH'?'គណនីរបស់អ្នកអាចប្រើ Tool នេះ និង Credits រួមបាន។':'Your account can access this tool and your shared credit wallet.';openModal('#toolModal')}","function openTool(name){if(!ensureLogin())return;if($('#toolWorkspaceTitle'))$('#toolWorkspaceTitle').textContent=name;if($('#toolWorkspaceText'))$('#toolWorkspaceText').textContent=state.lang==='KH'?'Tool នេះកំពុងរៀបចំ។ សូមរង់ចាំការអាប់ដេតបន្ទាប់។':'This tool is being prepared. Please check back in a future update.';openModal('#toolModal')}")
+          s=s.replace("on('#accountCreditsBtn','click',function(){closeModal('#authModal');route('credits')});",'')
+          s=s.replace("on('#walletBalance','click',function(){state.session&&state.session.access_token?route('credits'):showAuth('signup')});",'')
+          s=s.replace("on('#creditPageBalance','click',function(){state.session&&state.session.access_token?showAuth('signin'):showAuth('signup')});",'')
+          s=s.replace("if(name==='credits')refreshBalance();",'')
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html app.js
+          git commit -m "Temporarily remove AI Credits UI"
+          git push
