@@ -1,4 +1,4 @@
-name: Deploy Nex Prompt to GitHub Pages
+name: Deploy NEXORA Ai to GitHub Pages
 on:
   push:
     branches: ["main"]
