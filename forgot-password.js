@@ -89,6 +89,14 @@ function watchPayment(){
   checkPaid();
 }
 
+function enableOutsideClose(){
+  document.addEventListener('click',function(e){
+    var target=e.target;
+    if(!target||target.tagName!=='DIALOG'||!target.open)return;
+    try{target.close()}catch(err){target.removeAttribute('open')}
+  });
+}
+
 function init(){
   var btn=$('#forgotPasswordBtn');
   if(btn){
@@ -98,6 +106,7 @@ function init(){
     sync();
   }
   watchPayment();
+  enableOutsideClose();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
