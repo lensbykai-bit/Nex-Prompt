@@ -9,7 +9,7 @@ function $$(s){return Array.prototype.slice.call(document.querySelectorAll(s))}
 function read(k){try{return JSON.parse(localStorage.getItem(k)||'null')}catch(e){return null}}
 function save(k,v){try{if(v===null||typeof v==='undefined')localStorage.removeItem(k);else localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
 function on(sel,event,fn){var el=$(sel);if(el)el.addEventListener(event,fn);return el}
-function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]})}
 
 var oldCart=read('nex_cart_cloud');
 var oldSession=read('nex_cloud_session');
@@ -63,288 +63,54 @@ var T={
 };
 
 function tr(k){var a=T[k];return a?a[state.lang==='KH'?1:0]:k}
-function toast(m){
-  var el=$('#toast'); if(!el)return;
-  el.textContent=m; el.classList.add('show');
-  clearTimeout(window.__nexToast);
-  window.__nexToast=setTimeout(function(){el.classList.remove('show')},2600);
-}
-function openModal(sel){
-  var d=$(sel); if(!d)return;
-  try{if(!d.open)d.showModal()}catch(e){d.setAttribute('open','')}
-}
-function closeModal(sel){
-  var d=$(sel); if(!d)return;
-  try{if(d.open)d.close()}catch(e){d.removeAttribute('open')}
-}
-function request(url,action,opt){
-  opt=opt||{};
-  var ctrl=new AbortController();
-  var timer=setTimeout(function(){ctrl.abort()},opt.timeout||12000);
-  var headers={'Content-Type':'application/json'};
-  if(opt.auth&&state.session&&state.session.access_token){
-    headers.Authorization='Bearer '+state.session.access_token;
-  }
-  return fetch(url+'?action='+encodeURIComponent(action),{
-    method:opt.method||'GET',
-    headers:headers,
-    body:opt.body?JSON.stringify(opt.body):undefined,
-    signal:ctrl.signal
-  }).then(function(r){
-    return r.text().then(function(t){
-      var d={}; try{d=t?JSON.parse(t):{}}catch(e){}
-      if(!r.ok)throw new Error(d.error||'Request failed');
-      return d;
-    });
-  }).finally(function(){clearTimeout(timer)});
-}
+function toast(m){var el=$('#toast');if(!el)return;el.textContent=m;el.classList.add('show');clearTimeout(window.__nexToast);window.__nexToast=setTimeout(function(){el.classList.remove('show')},2600)}
+function openModal(sel){var d=$(sel);if(!d)return;try{if(!d.open)d.showModal()}catch(e){d.setAttribute('open','')}}
+function closeModal(sel){var d=$(sel);if(!d)return;try{if(d.open)d.close()}catch(e){d.removeAttribute('open')}}
+function request(url,action,opt){opt=opt||{};var ctrl=new AbortController();var timer=setTimeout(function(){ctrl.abort()},opt.timeout||12000);var headers={'Content-Type':'application/json'};if(opt.auth&&state.session&&state.session.access_token){headers.Authorization='Bearer '+state.session.access_token}return fetch(url+'?action='+encodeURIComponent(action),{method:opt.method||'GET',headers:headers,body:opt.body?JSON.stringify(opt.body):undefined,signal:ctrl.signal}).then(function(r){return r.text().then(function(t){var d={};try{d=t?JSON.parse(t):{}}catch(e){}if(!r.ok)throw new Error(d.error||'Request failed');return d})}).finally(function(){clearTimeout(timer)})}
 
 function injectAuthUI(){
   if($('#verifyPanel'))return;
-  var form=$('#authForm');
-  if(!form)return;
-
+  var form=$('#authForm');if(!form)return;
   var pass=$('#authPassword');
-  if(pass && !$('#passwordToggle')){
-    var wrap=document.createElement('div');
-    wrap.className='password-wrap';
-    pass.parentNode.insertBefore(wrap,pass);
-    wrap.appendChild(pass);
-    var toggle=document.createElement('button');
-    toggle.type='button';
-    toggle.id='passwordToggle';
-    toggle.className='password-toggle';
-    toggle.textContent='Show';
-    wrap.appendChild(toggle);
-  }
-
-  var verify=document.createElement('div');
-  verify.id='verifyPanel';
-  verify.className='auth-panel';
-  verify.hidden=true;
-  verify.innerHTML=
-    '<div class="verify-badge">✉</div>'+ 
-    '<h3 id="verifyTitle">Verify email</h3>'+ 
-    '<p class="auth-help" id="verifyHelp"></p>'+ 
-    '<label class="field"><span id="verifyCodeLabel">Verification code</span>'+ 
-    '<input id="verifyCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label>'+ 
-    '<button class="btn btn-primary" id="verifyBtn" type="button" style="width:100%">Verify email</button>'+ 
-    '<div class="auth-row">'+ 
-      '<button class="auth-link" id="resendBtn" type="button">Resend code</button>'+ 
-      '<button class="auth-link" id="backToAuthBtn" type="button">Back</button>'+ 
-    '</div>'+ 
-    '<div class="status" id="verifyStatus"></div>';
-  form.parentNode.insertBefore(verify,$('#authStatus'));
-
-  var account=document.createElement('div');
-  account.id='accountPanel';
-  account.className='auth-panel account-panel';
-  account.hidden=true;
-  account.innerHTML=
-    '<div class="account-avatar">N</div>'+ 
-    '<h3 id="accountName">My account</h3>'+ 
-    '<p class="auth-help" id="accountEmail"></p>'+ 
-    '<div class="account-actions">'+ 
-      '<button class="btn btn-primary" id="accountToolsBtn" type="button">Open AI Tools</button>'+ 
-      '<button class="btn btn-secondary" id="accountCreditsBtn" type="button">Buy Credits</button>'+ 
-    '</div>'+ 
-    '<button class="auth-danger" id="accountSignOutBtn" type="button">Sign out</button>';
-  form.parentNode.insertBefore(account,$('#authStatus'));
-
-  var style=document.createElement('style');
-  style.textContent=
-    '.password-wrap{position:relative}.password-wrap input{padding-right:74px}.password-toggle{position:absolute;right:7px;top:6px;height:34px;padding:0 10px;border:0;border-radius:8px;background:#211526;color:#ff69b3;font-size:11px;font-weight:800}'+
-    '.auth-panel h3{margin:10px 0 6px}.verify-badge,.account-avatar{width:58px;height:58px;margin:4px auto 14px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(135deg,#ff3b98,#a855f7);font-size:25px;font-weight:900}'+
-    '.auth-help{text-align:center;color:#a99eac;font-size:12px;line-height:1.65;margin:0 0 16px}.auth-row{display:flex;justify-content:space-between;gap:10px;margin-top:12px}.auth-link{border:0;background:transparent;color:#ff69b3;font-size:11px;font-weight:800;padding:8px 0}.account-panel{text-align:center}.account-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}.auth-danger{width:100%;margin-top:12px;padding:11px;border:1px solid #5b2639;border-radius:11px;background:#2a1019;color:#ff9eb7;font-weight:800}.auth-group.is-logged .auth-outline{border-radius:14px!important;background:linear-gradient(135deg,#2a1428,#18101f);color:#ff83bd}.auth-group.is-logged{border:0;background:transparent}.auth-group.is-logged .auth-primary{display:none!important}'+
-    '#verifyCode{text-align:center;font-size:24px;letter-spacing:.34em;font-weight:900;padding-left:calc(.34em + 13px)}';
-  document.head.appendChild(style);
+  if(pass&&!$('#passwordToggle')){var wrap=document.createElement('div');wrap.className='password-wrap';pass.parentNode.insertBefore(wrap,pass);wrap.appendChild(pass);var toggle=document.createElement('button');toggle.type='button';toggle.id='passwordToggle';toggle.className='password-toggle';toggle.textContent='Show';wrap.appendChild(toggle)}
+  var verify=document.createElement('div');verify.id='verifyPanel';verify.className='auth-panel';verify.hidden=true;verify.innerHTML='<div class="verify-badge">✉</div><h3 id="verifyTitle">Verify email</h3><p class="auth-help" id="verifyHelp"></p><label class="field"><span id="verifyCodeLabel">Verification code</span><input id="verifyCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"></label><button class="btn btn-primary" id="verifyBtn" type="button" style="width:100%">Verify email</button><div class="auth-row"><button class="auth-link" id="resendBtn" type="button">Resend code</button><button class="auth-link" id="backToAuthBtn" type="button">Back</button></div><div class="status" id="verifyStatus"></div>';form.parentNode.insertBefore(verify,$('#authStatus'));
+  var account=document.createElement('div');account.id='accountPanel';account.className='auth-panel account-panel';account.hidden=true;account.innerHTML='<div class="account-avatar">N</div><h3 id="accountName">My account</h3><p class="auth-help" id="accountEmail"></p><div class="account-actions"><button class="btn btn-primary" id="accountToolsBtn" type="button">Open AI Tools</button><button class="btn btn-secondary" id="accountCreditsBtn" type="button">Buy Credits</button></div><button class="auth-danger" id="accountSignOutBtn" type="button">Sign out</button>';form.parentNode.insertBefore(account,$('#authStatus'));
+  var style=document.createElement('style');style.textContent='.password-wrap{position:relative}.password-wrap input{padding-right:74px}.password-toggle{position:absolute;right:7px;top:6px;height:34px;padding:0 10px;border:0;border-radius:8px;background:#211526;color:#ff69b3;font-size:11px;font-weight:800}.auth-panel h3{margin:10px 0 6px}.verify-badge,.account-avatar{width:58px;height:58px;margin:4px auto 14px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(135deg,#ff3b98,#a855f7);font-size:25px;font-weight:900}.auth-help{text-align:center;color:#a99eac;font-size:12px;line-height:1.65;margin:0 0 16px}.auth-row{display:flex;justify-content:space-between;gap:10px;margin-top:12px}.auth-link{border:0;background:transparent;color:#ff69b3;font-size:11px;font-weight:800;padding:8px 0}.account-panel{text-align:center}.account-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}.auth-danger{width:100%;margin-top:12px;padding:11px;border:1px solid #5b2639;border-radius:11px;background:#2a1019;color:#ff9eb7;font-weight:800}.auth-group.is-logged .auth-outline{border-radius:14px!important;background:linear-gradient(135deg,#2a1428,#18101f);color:#ff83bd}.auth-group.is-logged{border:0;background:transparent}.auth-group.is-logged .auth-primary{display:none!important}#verifyCode{text-align:center;font-size:24px;letter-spacing:.34em;font-weight:900;padding-left:calc(.34em + 13px)}';document.head.appendChild(style)
 }
-
-function setStatus(sel,msg,type){
-  var el=$(sel); if(!el)return;
-  el.textContent=msg||'';
-  el.className='status'+(msg?' show '+(type||'error'):'');
-}
+function setStatus(sel,msg,type){var el=$(sel);if(!el)return;el.textContent=msg||'';el.className='status'+(msg?' show '+(type||'error'):'')}
 function clearAuthStatus(){setStatus('#authStatus','');setStatus('#verifyStatus','')}
-function authDisplayName(){
-  if(state.profile&&state.profile.display_name)return state.profile.display_name;
-  if(state.session&&state.session.profile&&state.session.profile.display_name)return state.session.profile.display_name;
-  if(state.session&&state.session.email)return state.session.email.split('@')[0];
-  return tr('My account');
-}
-function renderAuth(){
-  injectAuthUI();
-  var logged=!!(state.session&&state.session.access_token);
-  var form=$('#authForm'),tabs=$('.auth-tabs'),verify=$('#verifyPanel'),account=$('#accountPanel');
-  var title=$('#authTitle'),nameWrap=$('#authNameWrap'),submit=$('#authSubmit');
-
-  if(logged && state.authStep==='account'){
-    if(form)form.hidden=true;if(tabs)tabs.hidden=true;if(verify)verify.hidden=true;if(account)account.hidden=false;
-    if(title)title.textContent=tr('My account');
-    if($('#accountName'))$('#accountName').textContent=authDisplayName();
-    if($('#accountEmail'))$('#accountEmail').textContent=(state.session&&state.session.email)||'';
-    if($('#accountToolsBtn'))$('#accountToolsBtn').textContent=tr('Open AI Tools');
-    if($('#accountCreditsBtn'))$('#accountCreditsBtn').textContent=tr('Buy Credits');
-    if($('#accountSignOutBtn'))$('#accountSignOutBtn').textContent=tr('Sign out');
-    return;
-  }
-
-  if(state.authStep==='verify'){
-    if(form)form.hidden=true;if(tabs)tabs.hidden=true;if(account)account.hidden=true;if(verify)verify.hidden=false;
-    if(title)title.textContent=tr('Verify email');
-    if($('#verifyTitle'))$('#verifyTitle').textContent=tr('Verify email');
-    if($('#verifyCodeLabel'))$('#verifyCodeLabel').textContent=tr('Verification code');
-    if($('#verifyBtn'))$('#verifyBtn').textContent=tr('Verify email');
-    if($('#resendBtn'))$('#resendBtn').textContent=tr('Resend code');
-    if($('#backToAuthBtn'))$('#backToAuthBtn').textContent=tr('Back');
-    if($('#verifyHelp'))$('#verifyHelp').textContent=state.lang==='KH'?'យើងបានផ្ញើលេខកូដ 6 ខ្ទង់ទៅ '+state.verifyEmail+'។ សូមបញ្ចូលកូដដើម្បីបញ្ចប់ការចុះឈ្មោះ។':'We sent a 6-digit code to '+state.verifyEmail+'. Enter it to finish creating your account.';
-    return;
-  }
-
-  if(account)account.hidden=true;if(verify)verify.hidden=true;if(form)form.hidden=false;if(tabs)tabs.hidden=false;
-  var signup=state.authMode==='signup';
-  if(title)title.textContent=signup?tr('Create account'):tr('Sign in');
-  if(nameWrap)nameWrap.style.display=signup?'block':'none';
-  if(submit)submit.textContent=signup?tr('Create account'):tr('Sign in');
-  $$('.auth-tab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-mode')===state.authMode);if(b.getAttribute('data-mode')==='signup')b.textContent=tr('Sign up');if(b.getAttribute('data-mode')==='signin')b.textContent=tr('Sign in')});
-}
-function showAuth(mode){
-  if(state.session&&state.session.access_token)state.authStep='account';
-  else{state.authMode=mode==='signin'?'signin':'signup';state.authStep='form'}
-  clearAuthStatus();renderAuth();openModal('#authModal');
-}
-function showVerify(email,msg){
-  state.verifyEmail=String(email||'').trim();state.authStep='verify';clearAuthStatus();renderAuth();openModal('#authModal');
-  if(msg)setStatus('#verifyStatus',msg,'success');
-  setTimeout(function(){var c=$('#verifyCode');if(c)c.focus()},50);
-}
-function completeLogin(data,email){
-  state.session=data.session;state.session.email=email || (data.user&&data.user.email) || state.session.email || '';
-  save('nex_cloud_session',state.session);state.authStep='account';loadMe();updateAuthButtons();refreshBalance();renderAuth();
-  toast(state.lang==='KH'?'ចូលគណនីបានជោគជ័យ។':'Signed in successfully.');
-}
-function submitAuth(e){
-  e.preventDefault();
-  var email=(($('#authEmail')||{}).value||'').trim();
-  var pass=(($('#authPassword')||{}).value||'');
-  var name=(($('#authName')||{}).value||'').trim();
-  clearAuthStatus();
-  if(!email||!pass||(state.authMode==='signup'&&!name))return setStatus('#authStatus',state.lang==='KH'?'សូមបំពេញព័ត៌មានឲ្យគ្រប់។':'Please complete all fields.');
-  if(pass.length<6)return setStatus('#authStatus',state.lang==='KH'?'ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ 6 តួ។':'Password must be at least 6 characters.');
-  var btn=$('#authSubmit');if(btn){btn.disabled=true;btn.textContent=state.lang==='KH'?'កំពុងដំណើរការ...':'Please wait...'}
-  var action=state.authMode==='signup'?'signup':'signin';
-  var body=state.authMode==='signup'?{name:name,email:email,password:pass}:{email:email,password:pass};
-  request(STORE,action,{method:'POST',body:body}).then(function(d){
-    if(d.session&&d.session.access_token){completeLogin(d,email);closeModal('#authModal');return}
-    if(state.authMode==='signup' && (d.needs_confirmation || !d.session)){showVerify(email,state.lang==='KH'?'លេខកូដបញ្ជាក់ត្រូវបានផ្ញើទៅអ៊ីមែលរបស់អ្នក។':'Verification code sent to your email.');return}
-    setStatus('#authStatus',state.lang==='KH'?'មិនអាចចូលគណនីបានទេ។':'Could not sign in.');
-  }).catch(function(err){
-    var m=err&&err.message?err.message:'Request failed';
-    if(state.authMode==='signin' && /email not confirmed/i.test(m))showVerify(email,state.lang==='KH'?'អ៊ីមែលមិនទាន់បានបញ្ជាក់។ សូមបញ្ចូលកូដពីអ៊ីមែលថ្មីបំផុត។':'Email is not confirmed. Enter the code from your newest email.');
-    else setStatus('#authStatus',m);
-  }).finally(function(){if(btn){btn.disabled=false;renderAuth()}});
-}
-function verifyEmail(){
-  var code=(($('#verifyCode')||{}).value||'').replace(/\D/g,'').slice(0,6);
-  if(code.length!==6)return setStatus('#verifyStatus',state.lang==='KH'?'សូមបញ្ចូលលេខកូដ 6 ខ្ទង់។':'Enter the 6-digit verification code.');
-  var btn=$('#verifyBtn');if(btn)btn.disabled=true;
-  setStatus('#verifyStatus',state.lang==='KH'?'កំពុងពិនិត្យកូដ...':'Verifying...','success');
-  request(STORE,'verify-email',{method:'POST',body:{email:state.verifyEmail,token:code}}).then(function(d){
-    if(d.session&&d.session.access_token){completeLogin(d,state.verifyEmail);closeModal('#authModal')}
-    else{setStatus('#verifyStatus',state.lang==='KH'?'បានបញ្ជាក់អ៊ីមែល។ សូមចូលគណនី។':'Email verified. Please sign in.','success');state.authMode='signin';state.authStep='form';renderAuth();if($('#authEmail'))$('#authEmail').value=state.verifyEmail}
-  }).catch(function(err){setStatus('#verifyStatus',err&&err.message?err.message:'Invalid or expired verification code.')}).finally(function(){if(btn)btn.disabled=false});
-}
-function resendCode(){
-  if(!state.verifyEmail)return;var btn=$('#resendBtn');if(btn)btn.disabled=true;
-  request(STORE,'resend-confirmation',{method:'POST',body:{email:state.verifyEmail}}).then(function(d){setStatus('#verifyStatus',d.message||(state.lang==='KH'?'បានផ្ញើកូដថ្មី។':'A new verification code was sent.'),'success')}).catch(function(err){setStatus('#verifyStatus',err&&err.message?err.message:'Could not resend code.')}).finally(function(){if(btn)btn.disabled=false});
-}
+function authDisplayName(){if(state.profile&&state.profile.display_name)return state.profile.display_name;if(state.session&&state.session.profile&&state.session.profile.display_name)return state.session.profile.display_name;if(state.session&&state.session.email)return state.session.email.split('@')[0];return tr('My account')}
+function renderAuth(){injectAuthUI();var logged=!!(state.session&&state.session.access_token);var form=$('#authForm'),tabs=$('.auth-tabs'),verify=$('#verifyPanel'),account=$('#accountPanel');var title=$('#authTitle'),nameWrap=$('#authNameWrap'),submit=$('#authSubmit');if(logged&&state.authStep==='account'){if(form)form.hidden=true;if(tabs)tabs.hidden=true;if(verify)verify.hidden=true;if(account)account.hidden=false;if(title)title.textContent=tr('My account');if($('#accountName'))$('#accountName').textContent=authDisplayName();if($('#accountEmail'))$('#accountEmail').textContent=(state.session&&state.session.email)||'';if($('#accountToolsBtn'))$('#accountToolsBtn').textContent=tr('Open AI Tools');if($('#accountCreditsBtn'))$('#accountCreditsBtn').textContent=tr('Buy Credits');if($('#accountSignOutBtn'))$('#accountSignOutBtn').textContent=tr('Sign out');return}if(state.authStep==='verify'){if(form)form.hidden=true;if(tabs)tabs.hidden=true;if(account)account.hidden=true;if(verify)verify.hidden=false;if(title)title.textContent=tr('Verify email');if($('#verifyTitle'))$('#verifyTitle').textContent=tr('Verify email');if($('#verifyCodeLabel'))$('#verifyCodeLabel').textContent=tr('Verification code');if($('#verifyBtn'))$('#verifyBtn').textContent=tr('Verify email');if($('#resendBtn'))$('#resendBtn').textContent=tr('Resend code');if($('#backToAuthBtn'))$('#backToAuthBtn').textContent=tr('Back');if($('#verifyHelp'))$('#verifyHelp').textContent=state.lang==='KH'?'យើងបានផ្ញើលេខកូដ 6 ខ្ទង់ទៅ '+state.verifyEmail+'។ សូមបញ្ចូលកូដដើម្បីបញ្ចប់ការចុះឈ្មោះ។':'We sent a 6-digit code to '+state.verifyEmail+'. Enter it to finish creating your account.';return}if(account)account.hidden=true;if(verify)verify.hidden=true;if(form)form.hidden=false;if(tabs)tabs.hidden=false;var signup=state.authMode==='signup';if(title)title.textContent=signup?tr('Create account'):tr('Sign in');if(nameWrap)nameWrap.style.display=signup?'block':'none';if(submit)submit.textContent=signup?tr('Create account'):tr('Sign in');$$('.auth-tab').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-mode')===state.authMode);if(b.getAttribute('data-mode')==='signup')b.textContent=tr('Sign up');if(b.getAttribute('data-mode')==='signin')b.textContent=tr('Sign in')})}
+function showAuth(mode){if(state.session&&state.session.access_token)state.authStep='account';else{state.authMode=mode==='signin'?'signin':'signup';state.authStep='form'}clearAuthStatus();renderAuth();openModal('#authModal')}
+function showVerify(email,msg){state.verifyEmail=String(email||'').trim();state.authStep='verify';clearAuthStatus();renderAuth();openModal('#authModal');if(msg)setStatus('#verifyStatus',msg,'success');setTimeout(function(){var c=$('#verifyCode');if(c)c.focus()},50)}
+function completeLogin(data,email){state.session=data.session;state.session.email=email||(data.user&&data.user.email)||state.session.email||'';save('nex_cloud_session',state.session);state.authStep='account';loadMe();updateAuthButtons();refreshBalance();renderAuth();toast(state.lang==='KH'?'ចូលគណនីបានជោគជ័យ។':'Signed in successfully.')}
+function submitAuth(e){e.preventDefault();var email=(($('#authEmail')||{}).value||'').trim();var pass=(($('#authPassword')||{}).value||'');var name=(($('#authName')||{}).value||'').trim();clearAuthStatus();if(!email||!pass||(state.authMode==='signup'&&!name))return setStatus('#authStatus',state.lang==='KH'?'សូមបំពេញព័ត៌មានឲ្យគ្រប់។':'Please complete all fields.');if(pass.length<6)return setStatus('#authStatus',state.lang==='KH'?'ពាក្យសម្ងាត់ត្រូវមានយ៉ាងហោចណាស់ 6 តួ។':'Password must be at least 6 characters.');var btn=$('#authSubmit');if(btn){btn.disabled=true;btn.textContent=state.lang==='KH'?'កំពុងដំណើរការ...':'Please wait...'}var action=state.authMode==='signup'?'signup':'signin';var body=state.authMode==='signup'?{name:name,email:email,password:pass}:{email:email,password:pass};request(STORE,action,{method:'POST',body:body}).then(function(d){if(d.session&&d.session.access_token){completeLogin(d,email);closeModal('#authModal');return}if(state.authMode==='signup'&&(d.needs_confirmation||!d.session)){showVerify(email,state.lang==='KH'?'លេខកូដបញ្ជាក់ត្រូវបានផ្ញើទៅអ៊ីមែលរបស់អ្នក។':'Verification code sent to your email.');return}setStatus('#authStatus',state.lang==='KH'?'មិនអាចចូលគណនីបានទេ។':'Could not sign in.')}).catch(function(err){var m=err&&err.message?err.message:'Request failed';if(state.authMode==='signin'&&/email not confirmed/i.test(m))showVerify(email,state.lang==='KH'?'អ៊ីមែលមិនទាន់បានបញ្ជាក់។ សូមបញ្ចូលកូដពីអ៊ីមែលថ្មីបំផុត។':'Email is not confirmed. Enter the code from your newest email.');else setStatus('#authStatus',m)}).finally(function(){if(btn){btn.disabled=false;renderAuth()}})}
+function verifyEmail(){var code=(($('#verifyCode')||{}).value||'').replace(/\D/g,'').slice(0,6);if(code.length!==6)return setStatus('#verifyStatus',state.lang==='KH'?'សូមបញ្ចូលលេខកូដ 6 ខ្ទង់។':'Enter the 6-digit verification code.');var btn=$('#verifyBtn');if(btn)btn.disabled=true;setStatus('#verifyStatus',state.lang==='KH'?'កំពុងពិនិត្យកូដ...':'Verifying...','success');request(STORE,'verify-email',{method:'POST',body:{email:state.verifyEmail,token:code}}).then(function(d){if(d.session&&d.session.access_token){completeLogin(d,state.verifyEmail);closeModal('#authModal')}else{setStatus('#verifyStatus',state.lang==='KH'?'បានបញ្ជាក់អ៊ីមែល។ សូមចូលគណនី។':'Email verified. Please sign in.','success');state.authMode='signin';state.authStep='form';renderAuth();if($('#authEmail'))$('#authEmail').value=state.verifyEmail}}).catch(function(err){setStatus('#verifyStatus',err&&err.message?err.message:'Invalid or expired verification code.')}).finally(function(){if(btn)btn.disabled=false})}
+function resendCode(){if(!state.verifyEmail)return;var btn=$('#resendBtn');if(btn)btn.disabled=true;request(STORE,'resend-confirmation',{method:'POST',body:{email:state.verifyEmail}}).then(function(d){setStatus('#verifyStatus',d.message||(state.lang==='KH'?'បានផ្ញើកូដថ្មី។':'A new verification code was sent.'),'success')}).catch(function(err){setStatus('#verifyStatus',err&&err.message?err.message:'Could not resend code.')}).finally(function(){if(btn)btn.disabled=false})}
 function backToAuth(){state.authStep='form';state.authMode='signin';clearAuthStatus();renderAuth();if($('#authEmail'))$('#authEmail').value=state.verifyEmail||$('#authEmail').value}
 function signOut(){state.session=null;state.profile=null;save('nex_cloud_session',null);state.authMode='signin';state.authStep='form';updateAuthButtons();renderAuth();closeModal('#authModal');toast(state.lang==='KH'?'បានចាកចេញពីគណនី។':'Signed out.')}
-function loadMe(){
-  if(!(state.session&&state.session.access_token))return Promise.resolve();
-  return request(STORE,'me',{auth:true,timeout:8000}).then(function(d){state.profile=d.profile||null;if(d.user&&d.user.email)state.session.email=d.user.email;state.session.profile=state.profile;save('nex_cloud_session',state.session);updateAuthButtons();if(state.authStep==='account')renderAuth()}).catch(function(){});
-}
-function updateAuthButtons(){
-  var logged=!!(state.session&&state.session.access_token);var group=$('.auth-group'),si=$('#signInBtn'),su=$('#signUpBtn');var wb=$('#walletBalance'),cp=$('#creditPageBalance');
-  if(group)group.classList.toggle('is-logged',logged);if(si)si.textContent=logged?authDisplayName():tr('Sign in');if(su){su.textContent=tr('Sign up');su.style.display=logged?'none':''}
-  var bal=(wb&&wb.getAttribute('data-balance'))||'0 Credits';if(wb)wb.textContent=logged?bal:tr('Sign in');if(cp)cp.textContent=logged?bal:'Shared Wallet';
-}
-
-function applyLanguage(){
-  document.documentElement.lang=state.lang==='KH'?'km':'en';
-  $$('[data-t]').forEach(function(el){el.textContent=tr(el.getAttribute('data-t'))});
-  var q=$('#searchInput');if(q)q.placeholder=tr('Search prompts...');
-  $$('.lang button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-lang')===state.lang)});
-  renderAuth();renderCart();renderPrompts();updateAuthButtons();
-}
-function route(name){
-  var view=name==='how'?'home':name;
-  $$('.view').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-view')===view)});
-  $$('[data-route]').forEach(function(a){if(a.closest('.nav'))a.classList.toggle('active',a.getAttribute('data-route')===name)});
-  if(name==='prompt')renderPrompts();if(name==='credits')refreshBalance();
-  try{history.replaceState(null,'','#'+name)}catch(e){}
-  if(name==='how')setTimeout(function(){var h=$('#howSection');if(h)h.scrollIntoView({behavior:'smooth',block:'start'})},20);else window.scrollTo(0,0);
-}
+function loadMe(){if(!(state.session&&state.session.access_token))return Promise.resolve();return request(STORE,'me',{auth:true,timeout:8000}).then(function(d){state.profile=d.profile||null;if(d.user&&d.user.email)state.session.email=d.user.email;state.session.profile=state.profile;save('nex_cloud_session',state.session);updateAuthButtons();if(state.authStep==='account')renderAuth()}).catch(function(){})}
+function ensureAdminButton(){var group=$('.auth-group');if(!group)return null;var btn=$('#adminHeaderBtn');if(!btn){btn=document.createElement('button');btn.id='adminHeaderBtn';btn.type='button';btn.textContent='Admin';btn.style.display='none';btn.style.height='44px';btn.style.padding='0 18px';btn.style.border='1px solid #6d2b55';btn.style.borderRadius='14px';btn.style.background='linear-gradient(135deg,#39142e,#241126)';btn.style.color='#ff69b3';btn.style.fontWeight='900';btn.style.cursor='pointer';btn.style.whiteSpace='nowrap';btn.addEventListener('click',function(){location.href='/admin-price.html'});group.parentNode.insertBefore(btn,group)}return btn}
+function updateAuthButtons(){var logged=!!(state.session&&state.session.access_token);var group=$('.auth-group'),si=$('#signInBtn'),su=$('#signUpBtn');var wb=$('#walletBalance'),cp=$('#creditPageBalance');var adminBtn=ensureAdminButton();var profile=state.profile||(state.session&&state.session.profile)||null;var isAdmin=!!(logged&&profile&&profile.role==='admin');if(adminBtn)adminBtn.style.display=isAdmin?'inline-flex':'none';if(group)group.classList.toggle('is-logged',logged);if(si)si.textContent=logged?authDisplayName():tr('Sign in');if(su){su.textContent=tr('Sign up');su.style.display=logged?'none':''}var bal=(wb&&wb.getAttribute('data-balance'))||'0 Credits';if(wb)wb.textContent=logged?bal:tr('Sign in');if(cp)cp.textContent=logged?bal:'Shared Wallet'}
+function applyLanguage(){document.documentElement.lang=state.lang==='KH'?'km':'en';$$('[data-t]').forEach(function(el){el.textContent=tr(el.getAttribute('data-t'))});var q=$('#searchInput');if(q)q.placeholder=tr('Search prompts...');$$('.lang button').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-lang')===state.lang)});renderAuth();renderCart();renderPrompts();updateAuthButtons()}
+function route(name){var view=name==='how'?'home':name;$$('.view').forEach(function(x){x.classList.toggle('active',x.getAttribute('data-view')===view)});$$('[data-route]').forEach(function(a){if(a.closest('.nav'))a.classList.toggle('active',a.getAttribute('data-route')===name)});if(name==='prompt')renderPrompts();if(name==='credits')refreshBalance();try{history.replaceState(null,'','#'+name)}catch(e){}if(name==='how')setTimeout(function(){var h=$('#howSection');if(h)h.scrollIntoView({behavior:'smooth',block:'start'})},20);else window.scrollTo(0,0)}
 function mapPrompt(p){return{id:String(p.id),title:p.title||'Untitled Prompt',category:p.category||'cinematic',creator:p.creator||'Nex Prompt',model:p.model||'',price:Number(p.price||0),image:p.image_url||p.image||''}}
 function loadCatalog(){request(STORE,'catalog',{timeout:9000}).then(function(d){state.catalog=(d.items||[]).map(mapPrompt);if(!state.catalog.length)state.catalog=fallback;renderPrompts()}).catch(function(){state.catalog=fallback;renderPrompts()})}
 function filtered(){var input=$('#searchInput');var q=((input&&input.value)||'').toLowerCase().trim();return state.catalog.filter(function(p){return(state.filter==='all'||p.category===state.filter)&&(!q||(p.title+' '+p.creator+' '+p.model+' '+p.category).toLowerCase().indexOf(q)>=0)})}
-function renderPrompts(){
-  var g=$('#promptGrid');if(!g)return;var list=filtered();
-  g.innerHTML=list.length?list.map(function(p){return '<article class="prompt-card" data-prompt="'+escapeHtml(p.id)+'"><div class="prompt-img" style="background-image:url(&quot;'+escapeHtml(p.image)+'&quot;)"><span class="prompt-tag">'+escapeHtml(p.category)+'</span></div><div class="prompt-body"><h3>'+escapeHtml(p.title)+'</h3><div class="prompt-meta"><span>@ '+escapeHtml(p.creator)+'</span><span class="price">$'+p.price.toFixed(2)+'</span></div><div class="prompt-meta"><span>'+escapeHtml(p.model)+'</span><span>View</span></div></div></article>'}).join(''):'<div class="empty">'+(state.lang==='KH'?'រកមិនឃើញ Prompt ទេ។':'No prompts found.')+'</div>';
-}
-function openPrompt(id){
-  var p=state.catalog.find(function(x){return x.id===String(id)});if(!p)return;state.selectedPrompt=p;
-  var pv=$('#promptPreview');if(pv)pv.style.backgroundImage='url("'+p.image.replace(/"/g,'')+'")';if($('#promptTitle'))$('#promptTitle').textContent=p.title;if($('#promptDesc'))$('#promptDesc').textContent=p.category+' · '+p.model+' · @'+p.creator;if($('#promptPrice'))$('#promptPrice').textContent='$'+p.price.toFixed(2);if($('#addCartBtn'))$('#addCartBtn').textContent=state.cart.indexOf(p.id)>=0?(state.lang==='KH'?'មានក្នុងកន្ត្រក':'In Cart'):(state.lang==='KH'?'បន្ថែមទៅកន្ត្រក':'Add to Cart');openModal('#promptModal');
-}
+function renderPrompts(){var g=$('#promptGrid');if(!g)return;var list=filtered();g.innerHTML=list.length?list.map(function(p){return '<article class="prompt-card" data-prompt="'+escapeHtml(p.id)+'"><div class="prompt-img" style="background-image:url(&quot;'+escapeHtml(p.image)+'&quot;)"><span class="prompt-tag">'+escapeHtml(p.category)+'</span></div><div class="prompt-body"><h3>'+escapeHtml(p.title)+'</h3><div class="prompt-meta"><span>@ '+escapeHtml(p.creator)+'</span><span class="price">$'+p.price.toFixed(2)+'</span></div><div class="prompt-meta"><span>'+escapeHtml(p.model)+'</span><span>View</span></div></div></article>'}).join(''):'<div class="empty">'+(state.lang==='KH'?'រកមិនឃើញ Prompt ទេ។':'No prompts found.')+'</div>'}
+function openPrompt(id){var p=state.catalog.find(function(x){return x.id===String(id)});if(!p)return;state.selectedPrompt=p;var pv=$('#promptPreview');if(pv)pv.style.backgroundImage='url("'+p.image.replace(/"/g,'')+'")';if($('#promptTitle'))$('#promptTitle').textContent=p.title;if($('#promptDesc'))$('#promptDesc').textContent=p.category+' · '+p.model+' · @'+p.creator;if($('#promptPrice'))$('#promptPrice').textContent='$'+p.price.toFixed(2);if($('#addCartBtn'))$('#addCartBtn').textContent=state.cart.indexOf(p.id)>=0?(state.lang==='KH'?'មានក្នុងកន្ត្រក':'In Cart'):(state.lang==='KH'?'បន្ថែមទៅកន្ត្រក':'Add to Cart');openModal('#promptModal')}
 function updateCartCount(){var c=$('#cartCount');if(c)c.textContent=state.cart.length}
 function addCart(){if(!state.selectedPrompt)return;var id=state.selectedPrompt.id;if(state.cart.indexOf(id)<0)state.cart.push(id);save('nex_cart_cloud',state.cart);updateCartCount();toast(state.lang==='KH'?'បានបន្ថែមទៅកន្ត្រក។':'Added to cart.');openPrompt(id)}
-function renderCart(){
-  var box=$('#cartItems'),total=$('#cartTotal');if(!box||!total)return;
-  var rows=state.cart.map(function(id){return state.catalog.find(function(p){return p.id===id})}).filter(Boolean);
-  box.innerHTML=rows.length?rows.map(function(p){return '<div class="cart-row"><div><b>'+escapeHtml(p.title)+'</b><div class="price">$'+p.price.toFixed(2)+'</div></div><button class="remove" type="button" data-remove="'+escapeHtml(p.id)+'">Remove</button></div>'}).join(''):'<div class="empty">'+(state.lang==='KH'?'កន្ត្រកទទេ។':'Your cart is empty.')+'</div>';total.textContent='$'+rows.reduce(function(n,p){return n+p.price},0).toFixed(2);
-}
-function promptCheckout(){if(!state.cart.length)return toast(state.lang==='KH'?'កន្ត្រកទទេ។':'Your cart is empty.');request(STORE,'bakong-create',{method:'POST',body:{prompt_ids:state.cart.map(Number)}}).then(function(d){state.payment=Object.assign({},d.payment||{}, {type:'prompt'});showPayment(state.payment)}).catch(function(err){toast(err.message||'Could not create KHQR')})}
+function renderCart(){var box=$('#cartItems'),total=$('#cartTotal');if(!box||!total)return;var rows=state.cart.map(function(id){return state.catalog.find(function(p){return p.id===id})}).filter(Boolean);box.innerHTML=rows.length?rows.map(function(p){return '<div class="cart-row"><div><b>'+escapeHtml(p.title)+'</b><div class="price">$'+p.price.toFixed(2)+'</div></div><button class="remove" type="button" data-remove="'+escapeHtml(p.id)+'">Remove</button></div>'}).join(''):'<div class="empty">'+(state.lang==='KH'?'កន្ត្រកទទេ។':'Your cart is empty.')+'</div>';total.textContent='$'+rows.reduce(function(n,p){return n+p.price},0).toFixed(2)}
+function promptCheckout(){if(!state.cart.length)return toast(state.lang==='KH'?'កន្ត្រកទទេ។':'Your cart is empty.');request(STORE,'bakong-create',{method:'POST',body:{prompt_ids:state.cart.map(Number)}}).then(function(d){state.payment=Object.assign({},d.payment||{},{type:'prompt'});showPayment(state.payment)}).catch(function(err){toast(err.message||'Could not create KHQR')})}
 function ensureLogin(){if(state.session&&state.session.access_token)return true;showAuth('signup');toast(state.lang==='KH'?'សូមចុះឈ្មោះ ឬចូលគណនីជាមុន។':'Please sign up or sign in first.');return false}
 function openTool(name){if(!ensureLogin())return;if($('#toolWorkspaceTitle'))$('#toolWorkspaceTitle').textContent=name;if($('#toolWorkspaceText'))$('#toolWorkspaceText').textContent=state.lang==='KH'?'គណនីរបស់អ្នកអាចប្រើ Tool នេះ និង Credits រួមបាន។':'Your account can access this tool and your shared credit wallet.';openModal('#toolModal')}
-function refreshBalance(){
-  var wb=$('#walletBalance'),cp=$('#creditPageBalance');if(!(state.session&&state.session.access_token)){if(wb)wb.removeAttribute('data-balance');updateAuthButtons();return}
-  request(CREDIT,'balance',{auth:true,timeout:8000}).then(function(d){var val=Number(d.balance||0).toLocaleString()+' Credits';if(wb){wb.setAttribute('data-balance',val);wb.textContent=val}if(cp)cp.textContent=val}).catch(function(){if(wb){wb.setAttribute('data-balance','0 Credits');wb.textContent='0 Credits'}if(cp)cp.textContent='0 Credits'});
-}
+function refreshBalance(){var wb=$('#walletBalance'),cp=$('#creditPageBalance');if(!(state.session&&state.session.access_token)){if(wb)wb.removeAttribute('data-balance');updateAuthButtons();return}request(CREDIT,'balance',{auth:true,timeout:8000}).then(function(d){var val=Number(d.balance||0).toLocaleString()+' Credits';if(wb){wb.setAttribute('data-balance',val);wb.textContent=val}if(cp)cp.textContent=val}).catch(function(){if(wb){wb.setAttribute('data-balance','0 Credits');wb.textContent='0 Credits'}if(cp)cp.textContent='0 Credits'})}
 function renderQR(text){var box=$('#qrBox');if(!box)return;box.innerHTML='<div style="font-size:12px;line-height:1.45;color:#111;word-break:break-all;padding:14px">'+escapeHtml(text||'KHQR will appear here')+'</div>'}
 function showPayment(p){closeModal('#cartModal');if($('#payTitle'))$('#payTitle').textContent=p.credits?p.credits+' Credits':(state.lang==='KH'?'ទូទាត់ Prompt':'Prompt payment');if($('#payAmount'))$('#payAmount').textContent='$'+Number(p.amount_usd||p.amount||(state.creditPack&&state.creditPack.price)||0).toFixed(2);if($('#payStatus'))$('#payStatus').textContent=state.lang==='KH'?'កំពុងរង់ចាំការទូទាត់…':'Waiting for payment…';renderQR(p.qr_string||p.qr||'');openModal('#paymentModal')}
-function buyCredits(id,credits,price){if(!ensureLogin())return;state.creditPack={id:id,credits:credits,price:price};request(CREDIT,'create',{method:'POST',auth:true,body:{package_id:id}}).then(function(d){state.payment=Object.assign({},d.payment||{}, {type:'credit'});showPayment(state.payment)}).catch(function(err){toast(err.message||'Could not create KHQR')})}
-function checkPayment(){
-  if(!state.payment||!state.payment.client_token)return toast(state.lang==='KH'?'មិនទាន់មានការទូទាត់។':'No active payment.');
-  var isCredit=state.payment.type==='credit';
-  request(isCredit?CREDIT:STORE,isCredit?'status':'bakong-status',{method:'POST',auth:isCredit,body:{client_token:state.payment.client_token}}).then(function(d){if(d.status==='paid'){if($('#payStatus'))$('#payStatus').textContent=state.lang==='KH'?'✓ ទូទាត់ជោគជ័យ':'✓ Payment confirmed';if(isCredit)refreshBalance();else{state.cart=[];save('nex_cart_cloud',state.cart);updateCartCount()}toast(state.lang==='KH'?'ការទូទាត់បានជោគជ័យ។':'Payment confirmed.')}else toast(state.lang==='KH'?'មិនទាន់ទទួលការទូទាត់។':'Payment not received yet.')}).catch(function(err){toast(err.message||'Could not check payment')});
-}
-function bind(){
-  document.addEventListener('click',function(e){
-    var r=e.target.closest('[data-route]');if(r){e.preventDefault();closeModal('#toolModal');route(r.getAttribute('data-route'));return}
-    var cl=e.target.closest('[data-close]');if(cl){e.preventDefault();closeModal(cl.getAttribute('data-close'));return}
-    var mode=e.target.closest('.auth-tab');if(mode){state.authMode=mode.getAttribute('data-mode')==='signin'?'signin':'signup';state.authStep='form';clearAuthStatus();renderAuth();return}
-    var prompt=e.target.closest('[data-prompt]');if(prompt){openPrompt(prompt.getAttribute('data-prompt'));return}
-    var rem=e.target.closest('[data-remove]');if(rem){state.cart=state.cart.filter(function(x){return x!==rem.getAttribute('data-remove')});save('nex_cart_cloud',state.cart);updateCartCount();renderCart();return}
-    var tool=e.target.closest('[data-tool]');if(tool){openTool(tool.getAttribute('data-tool'));return}
-    var buy=e.target.closest('[data-buy]');if(buy){buyCredits(buy.getAttribute('data-buy'),Number(buy.getAttribute('data-credits')),Number(buy.getAttribute('data-price')));return}
-  });
-  on('#signUpBtn','click',function(){showAuth('signup')});on('#signInBtn','click',function(){showAuth('signin')});on('#authForm','submit',submitAuth);
-  on('#passwordToggle','click',function(){var p=$('#authPassword');if(!p)return;var show=p.type==='password';p.type=show?'text':'password';this.textContent=show?(state.lang==='KH'?'លាក់':'Hide'):(state.lang==='KH'?'បង្ហាញ':'Show')});
-  on('#verifyBtn','click',verifyEmail);on('#resendBtn','click',resendCode);on('#backToAuthBtn','click',backToAuth);on('#accountSignOutBtn','click',signOut);on('#signOutBtn','click',signOut);
-  on('#accountToolsBtn','click',function(){closeModal('#authModal');route('tools')});on('#accountCreditsBtn','click',function(){closeModal('#authModal');route('credits')});
-  on('#verifyCode','input',function(){this.value=this.value.replace(/\D/g,'').slice(0,6)});
-  on('#addCartBtn','click',addCart);on('#cartBtn','click',function(){renderCart();openModal('#cartModal')});on('#checkoutPromptBtn','click',promptCheckout);on('#checkPaymentBtn','click',checkPayment);
-  on('#walletBalance','click',function(){state.session&&state.session.access_token?route('credits'):showAuth('signup')});on('#creditPageBalance','click',function(){state.session&&state.session.access_token?showAuth('signin'):showAuth('signup')});
-  on('#searchInput','input',function(){var p=$('#promptView');if(p&&!p.classList.contains('active'))route('prompt');renderPrompts()});
-  on('#promptFilters','click',function(e){var b=e.target.closest('[data-filter]');if(!b)return;state.filter=b.getAttribute('data-filter');$$('.filter').forEach(function(x){x.classList.toggle('active',x===b)});renderPrompts()});
-  $$('.lang button').forEach(function(b){b.addEventListener('click',function(){state.lang=b.getAttribute('data-lang')==='KH'?'KH':'EN';localStorage.setItem('nex_prompt_lang',state.lang);applyLanguage()})});
-}
-function init(){
-  injectAuthUI();bind();updateCartCount();applyLanguage();
-  var h=(location.hash||'#home').slice(1);route(['home','prompt','tools','credits','how'].indexOf(h)>=0?h:'home');loadCatalog();
-  if(state.session&&state.session.access_token){loadMe();refreshBalance()}else updateAuthButtons();
-  window.__NEX_APP_READY=true;document.documentElement.setAttribute('data-nex-ready','1');
-}
+function buyCredits(id,credits,price){if(!ensureLogin())return;state.creditPack={id:id,credits:credits,price:price};request(CREDIT,'create',{method:'POST',auth:true,body:{package_id:id}}).then(function(d){state.payment=Object.assign({},d.payment||{},{type:'credit'});showPayment(state.payment)}).catch(function(err){toast(err.message||'Could not create KHQR')})}
+function checkPayment(){if(!state.payment||!state.payment.client_token)return toast(state.lang==='KH'?'មិនទាន់មានការទូទាត់។':'No active payment.');var isCredit=state.payment.type==='credit';request(isCredit?CREDIT:STORE,isCredit?'status':'bakong-status',{method:'POST',auth:isCredit,body:{client_token:state.payment.client_token}}).then(function(d){if(d.status==='paid'){if($('#payStatus'))$('#payStatus').textContent=state.lang==='KH'?'✓ ទូទាត់ជោគជ័យ':'✓ Payment confirmed';if(isCredit)refreshBalance();else{state.cart=[];save('nex_cart_cloud',state.cart);updateCartCount()}toast(state.lang==='KH'?'ការទូទាត់បានជោគជ័យ។':'Payment confirmed.')}else toast(state.lang==='KH'?'មិនទាន់ទទួលការទូទាត់។':'Payment not received yet.')}).catch(function(err){toast(err.message||'Could not check payment')})}
+function bind(){document.addEventListener('click',function(e){var r=e.target.closest('[data-route]');if(r){e.preventDefault();closeModal('#toolModal');route(r.getAttribute('data-route'));return}var cl=e.target.closest('[data-close]');if(cl){e.preventDefault();closeModal(cl.getAttribute('data-close'));return}var mode=e.target.closest('.auth-tab');if(mode){state.authMode=mode.getAttribute('data-mode')==='signin'?'signin':'signup';state.authStep='form';clearAuthStatus();renderAuth();return}var prompt=e.target.closest('[data-prompt]');if(prompt){openPrompt(prompt.getAttribute('data-prompt'));return}var rem=e.target.closest('[data-remove]');if(rem){state.cart=state.cart.filter(function(x){return x!==rem.getAttribute('data-remove')});save('nex_cart_cloud',state.cart);updateCartCount();renderCart();return}var tool=e.target.closest('[data-tool]');if(tool){openTool(tool.getAttribute('data-tool'));return}var buy=e.target.closest('[data-buy]');if(buy){buyCredits(buy.getAttribute('data-buy'),Number(buy.getAttribute('data-credits')),Number(buy.getAttribute('data-price')));return}});on('#signUpBtn','click',function(){showAuth('signup')});on('#signInBtn','click',function(){showAuth('signin')});on('#authForm','submit',submitAuth);on('#passwordToggle','click',function(){var p=$('#authPassword');if(!p)return;var show=p.type==='password';p.type=show?'text':'password';this.textContent=show?(state.lang==='KH'?'លាក់':'Hide'):(state.lang==='KH'?'បង្ហាញ':'Show')});on('#verifyBtn','click',verifyEmail);on('#resendBtn','click',resendCode);on('#backToAuthBtn','click',backToAuth);on('#accountSignOutBtn','click',signOut);on('#signOutBtn','click',signOut);on('#accountToolsBtn','click',function(){closeModal('#authModal');route('tools')});on('#accountCreditsBtn','click',function(){closeModal('#authModal');route('credits')});on('#verifyCode','input',function(){this.value=this.value.replace(/\D/g,'').slice(0,6)});on('#addCartBtn','click',addCart);on('#cartBtn','click',function(){renderCart();openModal('#cartModal')});on('#checkoutPromptBtn','click',promptCheckout);on('#checkPaymentBtn','click',checkPayment);on('#walletBalance','click',function(){state.session&&state.session.access_token?route('credits'):showAuth('signup')});on('#creditPageBalance','click',function(){state.session&&state.session.access_token?showAuth('signin'):showAuth('signup')});on('#searchInput','input',function(){var p=$('#promptView');if(p&&!p.classList.contains('active'))route('prompt');renderPrompts()});on('#promptFilters','click',function(e){var b=e.target.closest('[data-filter]');if(!b)return;state.filter=b.getAttribute('data-filter');$$('.filter').forEach(function(x){x.classList.toggle('active',x===b)});renderPrompts()});$$('.lang button').forEach(function(b){b.addEventListener('click',function(){state.lang=b.getAttribute('data-lang')==='KH'?'KH':'EN';localStorage.setItem('nex_prompt_lang',state.lang);applyLanguage()})})}
+function init(){injectAuthUI();bind();updateCartCount();applyLanguage();var h=(location.hash||'#home').slice(1);route(['home','prompt','tools','credits','how'].indexOf(h)>=0?h:'home');loadCatalog();if(state.session&&state.session.access_token){loadMe();refreshBalance()}else updateAuthButtons();window.__NEX_APP_READY=true;document.documentElement.setAttribute('data-nex-ready','1')}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-
 })();
