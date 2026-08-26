@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#080712">
 <title>NEXORA Ai — AI Creator Marketplace</title>
-<meta name="description" content="NEXORA Ai prompt marketplace and AI tools for creators.">
+<meta name="description" content="NEXORA Ai prompt marketplace for creators.">
 <link rel="stylesheet" href="app.css?v=20260826-2">
 </head>
 <body>
@@ -14,7 +14,6 @@
 <nav class="nav">
 <a href="#home" data-route="home" data-t="Home">Home</a>
 <a href="#prompt" data-route="prompt" data-t="Prompt">Prompt</a>
-<a href="#tools" data-route="tools" data-t="AI Tools">AI Tools</a>
 <a href="#how" data-route="how" data-t="How it works">How it works</a>
 </nav>
 <div class="top-actions">
@@ -41,24 +40,18 @@
 </div>
 <div class="home-cards">
 <a class="home-card" href="#prompt" data-route="prompt"><div class="icon">▧</div><h3>Prompt Marketplace</h3><p>Premium image-to-video prompts for cinematic content, product ads and creators.</p><span class="link-pink">Browse prompts →</span></a>
-<a class="home-card" href="#tools" data-route="tools"><div class="icon">✦</div><h3>AI Tools Workspace</h3><p>One member account for AI Image, Video, Voice and Dubbing.</p><span class="link-pink">Open tools →</span></a>
 </div>
-<div class="section" id="howSection"><h2>How it works</h2><p class="section-lead">Start with prompts, create one account, and use NEXORA Ai Tools from one workspace.</p><div class="how-grid"><div class="how-card"><b>01</b><h3>Choose</h3><p>Browse Prompt or select an AI Tool.</p></div><div class="how-card"><b>02</b><h3>Pay</h3><p>Buy Prompt securely using Bakong KHQR.</p></div><div class="how-card"><b>03</b><h3>Create</h3><p>Use your purchased prompt and creator tools.</p></div></div></div>
+<div class="section" id="howSection"><h2>How it works</h2><p class="section-lead">Choose a Prompt, purchase securely, and access it from My Prompts.</p><div class="how-grid"><div class="how-card"><b>01</b><h3>Choose</h3><p>Browse and choose the Prompt you want.</p></div><div class="how-card"><b>02</b><h3>Pay</h3><p>Buy Prompt securely using Bakong KHQR.</p></div><div class="how-card"><b>03</b><h3>Create</h3><p>Open your purchased Prompt from My Prompts.</p></div></div></div>
 </section>
 <section class="view" id="promptView" data-view="prompt">
 <div class="page-head"><div><h1>Prompt Marketplace</h1><p>Image-to-video prompts ready for cinematic motion, ads, nature, sci-fi and more.</p></div></div>
 <div class="filters" id="promptFilters"><button class="filter active" type="button" data-filter="all">All</button></div>
 <div class="prompt-grid" id="promptGrid"><div class="empty">Loading prompts…</div></div>
 </section>
-<section class="view" id="toolsView" data-view="tools">
-<div class="page-head"><div><h1>AI Tools Workspace</h1><p>Sign in once, then use supported AI tools from one workspace.</p></div></div>
-<div class="tools-grid"><button class="tool-card" type="button" data-tool="AI Image"><div class="tool-icon">▧</div><h3>AI Image</h3><p>Create visuals for social posts, ads and creative projects.</p><span class="cost">Coming soon</span></button><button class="tool-card" type="button" data-tool="AI Video"><div class="tool-icon">▶</div><h3>AI Video</h3><p>Turn text or images into short AI video generations.</p><span class="cost">Coming soon</span></button><button class="tool-card" type="button" data-tool="AI Voice"><div class="tool-icon">♪</div><h3>AI Voice</h3><p>Generate natural voiceovers for scripts and creator content.</p><span class="cost">Coming soon</span></button><button class="tool-card" type="button" data-tool="AI Dubbing"><div class="tool-icon">◎</div><h3>AI Dubbing</h3><p>Translate and dub creator videos from one workspace.</p><span class="cost">Coming soon</span></button></div>
-</section>
 </main>
 <dialog class="modal" id="authModal"><div class="modal-card"><button class="close" type="button" data-close="#authModal">×</button><h2 id="authTitle">Create account</h2><div class="auth-tabs"><button class="auth-tab active" type="button" data-mode="signup">Sign up</button><button class="auth-tab" type="button" data-mode="signin">Sign in</button></div><form id="authForm"><label class="field" id="authNameWrap"><span data-t="Display name">Display name</span><input id="authName" autocomplete="name"></label><label class="field"><span data-t="Email address">Email address</span><input id="authEmail" type="email" autocomplete="email" required></label><label class="field"><span data-t="Password">Password</span><input id="authPassword" type="password" minlength="6" autocomplete="current-password" required></label><div id="forgotPasswordRow" style="display:none;justify-content:flex-end;margin:-2px 0 10px"><button id="forgotPasswordBtn" type="button" style="border:0;background:transparent;color:#ff69b3;font-size:12px;font-weight:800;padding:4px 0;cursor:pointer">Forgot password?</button></div><button class="btn btn-primary" id="authSubmit" type="submit" style="width:100%">Create account</button></form><div class="status" id="authStatus"></div><button class="btn btn-secondary" id="signOutBtn" type="button" style="width:100%;margin-top:10px;display:none">Sign out</button></div></dialog>
 <dialog class="modal" id="promptModal"><div class="modal-card modal-wide"><button class="close" type="button" data-close="#promptModal">×</button><div class="prompt-detail"><div class="prompt-preview" id="promptPreview"></div><div class="prompt-info"><h2 id="promptTitle"></h2><p id="promptDesc"></p><div class="credit-price" id="promptPrice"></div><p>Full prompt is protected until purchase.</p><div class="prompt-buy-actions"><button class="btn btn-primary" id="addCartBtn" type="button">Add to Cart</button><button class="btn btn-secondary" id="buyNowBtn" type="button">Pay Now</button></div></div></div></div></dialog>
 <dialog class="modal" id="cartModal"><div class="modal-card"><button class="close" type="button" data-close="#cartModal">×</button><h2>Your Cart</h2><div id="cartItems"></div><div class="cart-total"><span>Total</span><strong id="cartTotal">$0.00</strong></div><button class="btn btn-primary" id="checkoutPromptBtn" type="button" style="width:100%">Checkout</button></div></dialog>
-<dialog class="modal" id="toolModal"><div class="modal-card"><button class="close" type="button" data-close="#toolModal">×</button><div class="tool-icon">✦</div><h2 id="toolWorkspaceTitle">AI Tool</h2><p class="section-lead" id="toolWorkspaceText"></p></div></dialog>
 <dialog class="modal" id="paymentModal"><div class="modal-card payment-center"><button class="close" type="button" data-close="#paymentModal">×</button><div class="eyebrow">BAKONG · KHQR</div><h2 id="payTitle">Payment</h2><div class="amount" id="payAmount">$0.00</div><p id="payHelp" style="color:#a99eac;font-size:12px;margin:7px 0 12px">Scan with Bakong or a supported banking app</p><div class="qr-box" id="qrBox"><div style="color:#655b66;font-size:12px">QR will appear here</div></div><div id="payMeta" style="display:flex;justify-content:center;gap:18px;color:#9b8f9d;font-size:10px;margin:9px 0"><span>Bakong KHQR</span><span id="payCountdown">10:00</span></div><div class="status show success" id="payStatus">Waiting for payment…</div><div class="payment-actions"><button class="btn btn-primary" id="checkPaymentBtn" type="button">Check payment</button><button class="btn btn-secondary" type="button" data-close="#paymentModal">Close</button></div></div></dialog>
 <div class="toast" id="toast"></div>
 <script src="app.js?v=20260826-4"></script>
