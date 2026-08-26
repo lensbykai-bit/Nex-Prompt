@@ -59,6 +59,8 @@ jobs:
                       ('Your payment was completed successfully.', 'ការទូទាត់របស់អ្នកបានជោគជ័យ។ Prompt ដែលអ្នកបានទិញត្រូវបានរក្សាទុកក្នុង Prompt របស់ខ្ញុំ រួចហើយ។'),
                       ('>Continue</button>', '>បន្ត</button>'),
                       ("btn.textContent='Continue'", "btn.textContent='បន្ត'"),
+                      ("title.textContent='អរគុណសម្រាប់ការប្រើប្រាស់';", "title.textContent='អរគុណសម្រាប់ការប្រើប្រាស់ NEXORA Ai';"),
+                      ("text.textContent='ការទូទាត់របស់អ្នកបានបញ្ចប់ដោយជោគជ័យ។ Prompt ដែលអ្នកបានទិញត្រូវបានរក្សាទុកក្នុង My Prompts។';", "text.textContent='ការទូទាត់របស់អ្នកបានជោគជ័យ។ Prompt ដែលអ្នកបានទិញត្រូវបានរក្សាទុកក្នុង Prompt របស់ខ្ញុំ រួចហើយ។';"),
                   ]
                   for old, replacement in thank_replacements:
                       new = new.replace(old, replacement)
@@ -81,5 +83,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add '*.html' '*.css' '*.js'
-          git commit -m "Translate payment success popup to Khmer"
+          git commit -m "Polish Khmer payment success popup"
           git push
