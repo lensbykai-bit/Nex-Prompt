@@ -28,6 +28,7 @@ jobs:
           s=re.sub(r'<span class="cost">[^<]*credits(?:/image|/video|/min)?</span>','<span class="cost">Coming soon</span>',s,flags=re.I)
           s=re.sub(r'<section class="view" id="creditsView" data-view="credits">.*?</section>\n','',s,flags=re.S)
           s=s.replace('<button class="btn btn-primary" type="button" data-route="credits">Get Credits</button>','')
+          s=s.replace('Translate and dub creator videos using a shared wallet.','Translate and dub creator videos from one workspace.')
           p.write_text(s)
 
           p=Path('app.js')
@@ -41,6 +42,7 @@ jobs:
           s=s.replace("on('#walletBalance','click',function(){state.session&&state.session.access_token?route('credits'):showAuth('signup')});",'')
           s=s.replace("on('#creditPageBalance','click',function(){state.session&&state.session.access_token?showAuth('signin'):showAuth('signup')});",'')
           s=s.replace("if(name==='credits')refreshBalance();",'')
+          s=s.replace('.account-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px}', '.account-actions{display:grid;grid-template-columns:1fr;gap:9px;margin-top:18px}')
           p.write_text(s)
           PY
       - name: Commit changes
@@ -49,5 +51,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html app.js
-          git commit -m "Temporarily remove AI Credits UI"
+          git commit -m "Polish AI Credits removal"
           git push
