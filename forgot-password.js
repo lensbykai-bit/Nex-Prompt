@@ -1,119 +1,37 @@
 (function(){
 'use strict';
-var API='https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/password-reset';
+var STORE='https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/store-api';
+var RESET='https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/password-reset';
 function $(s){return document.querySelector(s)}
+function $$(s){return Array.prototype.slice.call(document.querySelectorAll(s))}
 function isKH(){return localStorage.getItem('nex_prompt_lang')==='KH'}
-function setStatus(msg,type){var el=$('#authStatus');if(!el)return;el.textContent=msg||'';el.className='status'+(msg?' show '+(type||'error'):'')}
+function getSession(){try{return JSON.parse(localStorage.getItem('nex_cloud_session')||'null')}catch(e){return null}}
+function getCart(){try{var x=JSON.parse(localStorage.getItem('nex_cart_cloud')||'[]');return Array.isArray(x)?x:[]}catch(e){return []}}
+function authFetch(action,opt){opt=opt||{};var s=getSession();var h={'Content-Type':'application/json'};if(s&&s.access_token)h.Authorization='Bearer '+s.access_token;var url=STORE+'?action='+encodeURIComponent(action)+(opt.query||'');return fetch(url,{method:opt.method||'GET',headers:h,body:opt.body?JSON.stringify(opt.body):undefined}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok)throw new Error(d.error||'Request failed');return d})})}
+function setAuthStatus(msg,type){var el=$('#authStatus');if(!el)return;el.textContent=msg||'';el.className='status'+(msg?' show '+(type||'error'):'')}
 function isSignin(){var tab=$('.auth-tab[data-mode="signin"]');var form=$('#authForm');return !!(tab&&tab.classList.contains('active')&&form&&!form.hidden)}
-function sync(){var row=$('#forgotPasswordRow');var btn=$('#forgotPasswordBtn');if(!row||!btn)return;row.style.display=isSignin()?'flex':'none';btn.textContent=isKH()?'ភ្លេចពាក្យសម្ងាត់?':'Forgot password?'}
-function requestReset(){
-  var email=(($('#authEmail')||{}).value||'').trim();
-  if(!email){setStatus(isKH()?'សូមបញ្ចូល Email របស់អ្នកសិន។':'Enter your email address first.');var e=$('#authEmail');if(e)e.focus();return}
-  var btn=$('#forgotPasswordBtn');if(btn){btn.disabled=true;btn.textContent=isKH()?'កំពុងផ្ញើ...':'Sending...'}
-  setStatus(isKH()?'កំពុងផ្ញើ link សម្រាប់ប្តូរពាក្យសម្ងាត់...':'Sending password reset link...','success');
-  fetch(API+'?action=request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})})
-    .then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok)throw new Error(d.error||'Could not send reset link.');return d})})
-    .then(function(){setStatus(isKH()?'បានផ្ញើ Reset link ទៅ Email របស់អ្នក។ សូមពិនិត្យ Inbox និង Spam។':'Reset link sent. Check your inbox and spam folder.','success')})
-    .catch(function(err){setStatus(err&&err.message?err.message:(isKH()?'មិនអាចផ្ញើ Reset link បានទេ។':'Could not send reset link.'))})
-    .finally(function(){if(btn)btn.disabled=false;sync()});
-}
+function syncForgot(){var row=$('#forgotPasswordRow');var btn=$('#forgotPasswordBtn');if(!row||!btn)return;row.style.display=isSignin()?'flex':'none';btn.textContent=isKH()?'ភ្លេចពាក្យសម្ងាត់?':'Forgot password?'}
+function requestReset(){var email=(($('#authEmail')||{}).value||'').trim();if(!email){setAuthStatus(isKH()?'សូមបញ្ចូល Email របស់អ្នកសិន។':'Enter your email address first.');var e=$('#authEmail');if(e)e.focus();return}var btn=$('#forgotPasswordBtn');if(btn){btn.disabled=true;btn.textContent=isKH()?'កំពុងផ្ញើ...':'Sending...'}setAuthStatus(isKH()?'កំពុងផ្ញើ link សម្រាប់ប្តូរពាក្យសម្ងាត់...':'Sending password reset link...','success');fetch(RESET+'?action=request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})}).then(function(r){return r.json().catch(function(){return{}}).then(function(d){if(!r.ok)throw new Error(d.error||'Could not send reset link.');return d})}).then(function(){setAuthStatus(isKH()?'បានផ្ញើ Reset link ទៅ Email របស់អ្នក។ សូមពិនិត្យ Inbox និង Spam។':'Reset link sent. Check your inbox and spam folder.','success')}).catch(function(err){setAuthStatus(err&&err.message?err.message:(isKH()?'មិនអាចផ្ញើ Reset link បានទេ។':'Could not send reset link.'))}).finally(function(){if(btn)btn.disabled=false;syncForgot()})}
 
-var thankTimer=null;
-var lastPaidKey='';
-var paidPoll=null;
-function ensureThankDialog(){
-  var d=$('#thankYouModal');
-  if(d)return d;
-  d=document.createElement('dialog');
-  d.id='thankYouModal';
-  d.style.padding='0';
-  d.style.border='0';
-  d.style.background='transparent';
-  d.style.maxWidth='none';
-  d.innerHTML='<div style="position:relative;width:min(92vw,520px);padding:42px 34px 30px;border:1px solid #6d315c;border-radius:28px;background:linear-gradient(160deg,#120c19,#0b0811);color:#fff;text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.55)">'+
-    '<button type="button" id="thankCloseX" style="position:absolute;right:18px;top:17px;width:42px;height:42px;border-radius:50%;border:1px solid #5e3557;background:#17101d;color:#fff;font-size:25px;cursor:pointer">×</button>'+ 
-    '<div style="width:78px;height:78px;margin:4px auto 20px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ff3196,#ad4cf0);font-size:38px;font-weight:900">✓</div>'+ 
-    '<div id="thankEyebrow" style="color:#ff69b3;font-size:12px;font-weight:900;letter-spacing:.08em;margin-bottom:10px">PAYMENT SUCCESSFUL</div>'+ 
-    '<h2 id="thankTitle" style="margin:0 0 12px;font-size:30px;line-height:1.35">Thank you for using Nex Prompt</h2>'+ 
-    '<p id="thankText" style="margin:0 auto 25px;max-width:390px;color:#b7abb9;font-size:14px;line-height:1.75">Your payment was completed successfully.</p>'+ 
-    '<button type="button" id="thankContinue" style="width:100%;height:56px;border:0;border-radius:15px;background:linear-gradient(135deg,#ff3196,#ad4cf0);color:#fff;font-size:16px;font-weight:900;cursor:pointer">Continue</button>'+ 
-    '</div>';
-  document.body.appendChild(d);
-  var style=document.createElement('style');
-  style.textContent='#thankYouModal::backdrop{background:rgba(5,3,10,.76);backdrop-filter:blur(8px)}';
-  document.head.appendChild(style);
-  function close(){try{if(d.open)d.close()}catch(e){d.removeAttribute('open')}}
-  $('#thankCloseX').addEventListener('click',close);
-  $('#thankContinue').addEventListener('click',close);
-  return d;
-}
-function showThankYou(){
-  var d=ensureThankDialog();
-  var title=$('#thankTitle'),text=$('#thankText'),eyebrow=$('#thankEyebrow'),btn=$('#thankContinue');
-  if(isKH()){
-    if(eyebrow)eyebrow.textContent='ទូទាត់ជោគជ័យ';
-    if(title)title.textContent='អរគុណសម្រាប់ការប្រើប្រាស់';
-    if(text)text.textContent='ការទូទាត់របស់អ្នកបានបញ្ចប់ដោយជោគជ័យ។ អរគុណដែលបានប្រើប្រាស់ Nex Prompt។';
-    if(btn)btn.textContent='បន្ត';
-  }else{
-    if(eyebrow)eyebrow.textContent='PAYMENT SUCCESSFUL';
-    if(title)title.textContent='Thank you for using Nex Prompt';
-    if(text)text.textContent='Your payment was completed successfully. Thank you for using Nex Prompt.';
-    if(btn)btn.textContent='Continue';
-  }
-  try{if(!d.open)d.showModal()}catch(e){d.setAttribute('open','')}
-}
-function paidSignal(){
-  var status=String((($('#payStatus')||{}).textContent)||'').trim();
-  var button=String((($('#checkPaymentBtn')||{}).textContent)||'').trim();
-  var all=(status+' '+button).toLowerCase();
-  var paid=all.indexOf('payment confirmed')>=0||all.indexOf('payment successful')>=0||status.indexOf('ទូទាត់ជោគជ័យ')>=0||status.indexOf('ការទូទាត់បានជោគជ័យ')>=0||button.indexOf('ទូទាត់ជោគជ័យ')>=0;
-  return {paid:paid,key:status+'|'+button};
-}
-function triggerThankYou(){
-  var payment=$('#paymentModal');
-  var r=paidSignal();
-  if(!payment||!payment.open||!r.paid)return;
-  if(r.key===lastPaidKey&&thankTimer)return;
-  lastPaidKey=r.key;
-  clearTimeout(thankTimer);
-  thankTimer=setTimeout(function(){
-    try{if(payment.open)payment.close()}catch(e){payment.removeAttribute('open')}
-    setTimeout(showThankYou,180);
-    thankTimer=null;
-  },700);
-}
-function watchPayment(){
-  var status=$('#payStatus');
-  var payment=$('#paymentModal');
-  var btn=$('#checkPaymentBtn');
-  if(!payment)return;
-  if(status)new MutationObserver(triggerThankYou).observe(status,{childList:true,subtree:true,characterData:true});
-  if(btn)new MutationObserver(triggerThankYou).observe(btn,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class','disabled']});
-  new MutationObserver(function(ms){ms.forEach(function(m){if(m.attributeName==='open'){if(payment.open){lastPaidKey='';clearTimeout(thankTimer);thankTimer=null;triggerThankYou()}else{lastPaidKey=''}}})}).observe(payment,{attributes:true,attributeFilter:['open']});
-  clearInterval(paidPoll);
-  paidPoll=setInterval(function(){if(payment.open)triggerThankYou()},350);
-  triggerThankYou();
-}
+var thankReload=false;
+function ensureThankDialog(){var d=$('#thankYouModal');if(d)return d;d=document.createElement('dialog');d.id='thankYouModal';d.style.padding='0';d.style.border='0';d.style.background='transparent';d.style.maxWidth='none';d.innerHTML='<div style="position:relative;width:min(92vw,520px);padding:42px 34px 30px;border:1px solid #6d315c;border-radius:28px;background:linear-gradient(160deg,#120c19,#0b0811);color:#fff;text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.55)"><button type="button" id="thankCloseX" style="position:absolute;right:18px;top:17px;width:42px;height:42px;border-radius:50%;border:1px solid #5e3557;background:#17101d;color:#fff;font-size:25px;cursor:pointer">×</button><div style="width:78px;height:78px;margin:4px auto 20px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#ff3196,#ad4cf0);font-size:38px;font-weight:900">✓</div><div id="thankEyebrow" style="color:#ff69b3;font-size:12px;font-weight:900;letter-spacing:.08em;margin-bottom:10px">PAYMENT SUCCESSFUL</div><h2 id="thankTitle" style="margin:0 0 12px;font-size:30px;line-height:1.35">Thank you for using Nex Prompt</h2><p id="thankText" style="margin:0 auto 25px;max-width:390px;color:#b7abb9;font-size:14px;line-height:1.75">Your payment was completed successfully.</p><button type="button" id="thankContinue" style="width:100%;height:56px;border:0;border-radius:15px;background:linear-gradient(135deg,#ff3196,#ad4cf0);color:#fff;font-size:16px;font-weight:900;cursor:pointer">Continue</button></div>';document.body.appendChild(d);var st=document.createElement('style');st.textContent='#thankYouModal::backdrop{background:rgba(5,3,10,.76);backdrop-filter:blur(8px)}';document.head.appendChild(st);function close(){try{if(d.open)d.close()}catch(e){d.removeAttribute('open')}if(thankReload){thankReload=false;location.reload()}}$('#thankCloseX').addEventListener('click',close);$('#thankContinue').addEventListener('click',close);return d}
+function showThankYou(reload){thankReload=!!reload;var d=ensureThankDialog(),title=$('#thankTitle'),text=$('#thankText'),eyebrow=$('#thankEyebrow'),btn=$('#thankContinue');if(isKH()){eyebrow.textContent='ទូទាត់ជោគជ័យ';title.textContent='អរគុណសម្រាប់ការប្រើប្រាស់';text.textContent='ការទូទាត់របស់អ្នកបានបញ្ចប់ដោយជោគជ័យ។ Prompt ដែលអ្នកបានទិញត្រូវបានរក្សាទុកក្នុង My Prompts។';btn.textContent='បន្ត'}else{eyebrow.textContent='PAYMENT SUCCESSFUL';title.textContent='Thank you for using Nex Prompt';text.textContent='Your payment was completed successfully. Your purchased Prompt is now saved in My Prompts.';btn.textContent='Continue'}try{if(!d.open)d.showModal()}catch(e){d.setAttribute('open','')}}
 
-function enableOutsideClose(){
-  document.addEventListener('click',function(e){
-    var target=e.target;
-    if(!target||target.tagName!=='DIALOG'||!target.open)return;
-    try{target.close()}catch(err){target.removeAttribute('open')}
-  });
-}
+var activePromptPayment=null,autoTimer=null;
+function openPayment(p){activePromptPayment=p;var m=$('#paymentModal');if($('#payTitle'))$('#payTitle').textContent=isKH()?'ទូទាត់ Prompt':'Prompt payment';if($('#payAmount'))$('#payAmount').textContent='$'+Number(p.amount_usd||0).toFixed(2);if($('#payStatus'))$('#payStatus').textContent=isKH()?'កំពុងរង់ចាំការទូទាត់…':'Waiting for payment…';var box=$('#qrBox');if(box)box.textContent=p.qr_string||'';try{if(m&&!m.open)m.showModal()}catch(e){if(m)m.setAttribute('open','')}clearInterval(autoTimer);autoTimer=setInterval(function(){if(activePromptPayment&&m&&m.open)checkPromptPayment(false)},5000)}
+function startPromptCheckout(){var s=getSession();if(!s||!s.access_token){var b=$('#signInBtn');if(b)b.click();return}var ids=getCart().map(Number).filter(function(x){return Number.isInteger(x)&&x>0});if(!ids.length)return;authFetch('bakong-create',{method:'POST',body:{prompt_ids:ids}}).then(function(d){openPayment(d.payment||{})}).catch(function(err){var t=$('#toast');if(t){t.textContent=err.message||'Could not create KHQR';t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}})}
+function checkPromptPayment(showPending){if(!activePromptPayment||!activePromptPayment.client_token)return;var btn=$('#checkPaymentBtn');if(btn)btn.disabled=true;authFetch('bakong-status',{method:'POST',body:{client_token:activePromptPayment.client_token}}).then(function(d){if(d.status==='paid'){clearInterval(autoTimer);autoTimer=null;if($('#payStatus'))$('#payStatus').textContent=isKH()?'✓ ទូទាត់ជោគជ័យ':'✓ Payment confirmed';if(btn)btn.textContent=isKH()?'បានទូទាត់':'Payment confirmed';localStorage.setItem('nex_cart_cloud','[]');var c=$('#cartCount');if(c)c.textContent='0';loadPurchases();setTimeout(function(){var m=$('#paymentModal');try{if(m&&m.open)m.close()}catch(e){if(m)m.removeAttribute('open')}activePromptPayment=null;showThankYou(true)},850)}else if(d.status==='expired'){if($('#payStatus'))$('#payStatus').textContent=isKH()?'QR ផុតកំណត់':'QR expired'}else if(showPending){if($('#payStatus'))$('#payStatus').textContent=isKH()?'មិនទាន់ទទួលការទូទាត់':'Waiting for payment…'}}).catch(function(err){if(showPending&&$('#payStatus'))$('#payStatus').textContent=err.message||'Could not check payment'}).finally(function(){if(btn)btn.disabled=false})}
 
-function init(){
-  var btn=$('#forgotPasswordBtn');
-  if(btn){
-    btn.addEventListener('click',requestReset);
-    document.addEventListener('click',function(e){if(e.target&&e.target.closest('.auth-tab'))setTimeout(sync,0);if(e.target&&e.target.matches('[data-lang]'))setTimeout(sync,20)});
-    var modal=$('#authModal');if(modal)new MutationObserver(sync).observe(modal,{subtree:true,attributes:true,attributeFilter:['class','hidden','open']});
-    sync();
-  }
-  watchPayment();
-  enableOutsideClose();
-}
+var purchaseItems=[];
+function ensurePurchaseUI(){var nav=$('.nav');if(nav&&!$('#myPromptsNav')){var a=document.createElement('a');a.href='#my-prompts';a.id='myPromptsNav';a.textContent=isKH()?'Prompt របស់ខ្ញុំ':'My Prompts';a.style.display='none';var promptLink=nav.querySelector('[data-route="prompt"]');if(promptLink&&promptLink.nextSibling)nav.insertBefore(a,promptLink.nextSibling);else nav.appendChild(a)}if(!$('#myPromptsView')){var main=$('main');var sec=document.createElement('section');sec.className='view';sec.id='myPromptsView';sec.setAttribute('data-view','my-prompts');sec.innerHTML='<div class="page-head"><div><h1 id="myPromptsTitle">My Prompts</h1><p id="myPromptsLead">Prompts you purchased are saved to your account.</p></div></div><div class="prompt-grid" id="myPromptsGrid"><div class="empty">Loading…</div></div>';main.appendChild(sec)}if(!$('#ownedPromptModal')){var d=document.createElement('dialog');d.className='modal';d.id='ownedPromptModal';d.innerHTML='<div class="modal-card" style="width:min(92vw,760px)"><button class="close" type="button" id="ownedPromptClose">×</button><div class="eyebrow">PURCHASED PROMPT</div><h2 id="ownedPromptTitle">Prompt</h2><p id="ownedPromptMeta" class="section-lead"></p><div style="margin-top:18px;padding:18px;border:1px solid #4b2b48;border-radius:16px;background:#09070e"><pre id="ownedPromptText" style="margin:0;white-space:pre-wrap;word-break:break-word;font:inherit;line-height:1.75;color:#f6edf5"></pre></div><button class="btn btn-primary" id="copyOwnedPrompt" type="button" style="width:100%;margin-top:14px">Copy Prompt</button></div>';document.body.appendChild(d);$('#ownedPromptClose').addEventListener('click',function(){try{d.close()}catch(e){d.removeAttribute('open')}});$('#copyOwnedPrompt').addEventListener('click',function(){var txt=($('#ownedPromptText')||{}).textContent||'';if(navigator.clipboard)navigator.clipboard.writeText(txt);this.textContent=isKH()?'បាន Copy ✓':'Copied ✓';var self=this;setTimeout(function(){self.textContent=isKH()?'Copy Prompt':'Copy Prompt'},1400)})}var style=document.createElement('style');style.textContent='#myPromptsNav{cursor:pointer}.owned-badge{display:inline-flex;padding:5px 9px;border-radius:999px;background:#14351f;color:#9be5b8;font-size:10px;font-weight:900}.owned-date{color:#9d92a0;font-size:10px}.owned-open{color:#ff69b3;font-weight:850}';document.head.appendChild(style)}
+function syncMyPrompts(){ensurePurchaseUI();var s=getSession(),a=$('#myPromptsNav');if(a){a.style.display=s&&s.access_token?'':'none';a.textContent=isKH()?'Prompt របស់ខ្ញុំ':'My Prompts'}if($('#myPromptsTitle'))$('#myPromptsTitle').textContent=isKH()?'Prompt របស់ខ្ញុំ':'My Prompts';if($('#myPromptsLead'))$('#myPromptsLead').textContent=isKH()?'Prompt ដែលអ្នកបានទិញនឹងរក្សាទុកនៅទីនេះក្នុងគណនីរបស់អ្នក។':'Prompts you purchased are saved here in your account.'}
+function showMyPrompts(){var s=getSession();if(!s||!s.access_token){var b=$('#signInBtn');if(b)b.click();return}$$('.view').forEach(function(v){v.classList.toggle('active',v.id==='myPromptsView')});$$('.nav a').forEach(function(a){a.classList.toggle('active',a.id==='myPromptsNav')});try{history.replaceState(null,'','#my-prompts')}catch(e){}window.scrollTo(0,0);loadPurchases()}
+function renderPurchases(){var g=$('#myPromptsGrid');if(!g)return;if(!purchaseItems.length){g.innerHTML='<div class="empty">'+(isKH()?'មិនទាន់មាន Prompt ដែលបានទិញទេ។':'You have not purchased any Prompts yet.')+'</div>';return}g.innerHTML=purchaseItems.map(function(p){var date='';try{date=new Date(p.purchased_at).toLocaleDateString()}catch(e){}return '<article class="prompt-card" data-owned="'+String(p.id||p.prompt_id)+'"><div class="prompt-img" style="background-image:url(&quot;'+String(p.image_url||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'&quot;)"><span class="prompt-tag">'+String(p.category||'Prompt')+'</span></div><div class="prompt-body"><h3>'+String(p.title||'Purchased Prompt')+'</h3><div class="prompt-meta"><span class="owned-badge">✓ '+(isKH()?'បានទិញ':'Purchased')+'</span><span class="owned-date">'+date+'</span></div><div class="prompt-meta"><span>'+String(p.model||'')+'</span><span class="owned-open">'+(isKH()?'មើល Prompt':'View Prompt')+'</span></div></div></article>'}).join('')}
+function loadPurchases(){var s=getSession();if(!s||!s.access_token)return;var g=$('#myPromptsGrid');if(g)g.innerHTML='<div class="empty">'+(isKH()?'កំពុងទាញ Prompt...':'Loading purchased Prompts…')+'</div>';authFetch('purchases').then(function(d){purchaseItems=d.items||[];renderPurchases()}).catch(function(err){if(g)g.innerHTML='<div class="empty">'+String(err.message||'Could not load purchased Prompts')+'</div>'})}
+function openOwnedPrompt(id){authFetch('prompt',{query:'&id='+encodeURIComponent(id)}).then(function(p){$('#ownedPromptTitle').textContent=p.title||'Prompt';$('#ownedPromptMeta').textContent=(p.category||'')+' · '+(p.model||'')+' · @'+(p.creator||'Nex Prompt');$('#ownedPromptText').textContent=p.prompt_text||'';$('#copyOwnedPrompt').textContent='Copy Prompt';var d=$('#ownedPromptModal');try{if(!d.open)d.showModal()}catch(e){d.setAttribute('open','')}}).catch(function(err){var t=$('#toast');if(t){t.textContent=err.message||'Could not open Prompt';t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2500)}})}
+
+function enableOutsideClose(){document.addEventListener('click',function(e){var target=e.target;if(target&&target.tagName==='DIALOG'&&target.open){try{target.close()}catch(err){target.removeAttribute('open')}}})}
+function bindPurchases(){document.addEventListener('click',function(e){var nav=e.target.closest('#myPromptsNav');if(nav){e.preventDefault();e.stopImmediatePropagation();showMyPrompts();return}var owned=e.target.closest('[data-owned]');if(owned){e.preventDefault();openOwnedPrompt(owned.getAttribute('data-owned'));return}},true);document.addEventListener('click',function(e){var checkout=e.target.closest('#checkoutPromptBtn');if(checkout){e.preventDefault();e.stopImmediatePropagation();startPromptCheckout();return}var check=e.target.closest('#checkPaymentBtn');if(check&&activePromptPayment){e.preventDefault();e.stopImmediatePropagation();checkPromptPayment(true);return}var close=e.target.closest('[data-close="#paymentModal"]');if(close&&activePromptPayment){activePromptPayment=null;clearInterval(autoTimer);autoTimer=null}},true)}
+function init(){ensurePurchaseUI();syncMyPrompts();var btn=$('#forgotPasswordBtn');if(btn){btn.addEventListener('click',requestReset);document.addEventListener('click',function(e){if(e.target&&e.target.closest('.auth-tab'))setTimeout(syncForgot,0);if(e.target&&e.target.matches('[data-lang]'))setTimeout(function(){syncForgot();syncMyPrompts()},20)});var modal=$('#authModal');if(modal)new MutationObserver(function(){syncForgot();syncMyPrompts()}).observe(modal,{subtree:true,attributes:true,attributeFilter:['class','hidden','open']});syncForgot()}bindPurchases();enableOutsideClose();setInterval(syncMyPrompts,1500);var h=(location.hash||'').slice(1);if(h==='my-prompts'&&getSession())setTimeout(showMyPrompts,150)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
