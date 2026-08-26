@@ -1,5 +1,5 @@
 /* NEXORA Ai — premium Prompt sales storefront */
-.brand{width:210px;height:64px;flex:0 0 210px;background:url('assets/nexora-ai-logo-header.webp') left center/contain no-repeat;overflow:hidden;filter:drop-shadow(0 0 10px rgba(165,74,255,.16))}
+.brand{width:210px;height:64px;flex:0 0 210px;background:url('assets/nexora-ai-logo-header-v2.webp') left center/contain no-repeat;overflow:hidden;filter:drop-shadow(0 0 10px rgba(165,74,255,.16))}
 .brand .brand-mark,.brand>span:last-child{display:none!important}
 
 /* Premium hero */
