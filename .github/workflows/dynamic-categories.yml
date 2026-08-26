@@ -1,0 +1,45 @@
+name: Dynamic NEXORA Ai categories
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/dynamic-categories.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Make category filters dynamic
+        shell: python
+        run: |
+          from pathlib import Path
+
+          app = Path('app.js')
+          s = app.read_text(encoding='utf-8')
+
+          old = "function loadCatalog(){request(STORE,'catalog',{timeout:9000}).then(function(d){state.catalog=(d.items||[]).map(mapPrompt);if(!state.catalog.length)state.catalog=fallback;renderPrompts()}).catch(function(){state.catalog=fallback;renderPrompts()})}\nfunction filtered(){var input=$('#searchInput');var q=((input&&input.value)||'').toLowerCase().trim();return state.catalog.filter(function(p){return(state.filter==='all'||p.category===state.filter)&&(!q||(p.title+' '+p.creator+' '+p.model+' '+p.category).toLowerCase().indexOf(q)>=0)})}"
+          new = "function categoryKey(v){return String(v||'').trim().toLowerCase()}\nfunction renderCategoryFilters(){var box=$('#promptFilters');if(!box)return;var seen={};var cats=[];state.catalog.forEach(function(p){var name=String(p.category||'').trim();var key=categoryKey(name);if(key&&!seen[key]){seen[key]=true;cats.push({key:key,name:name})}});if(state.filter!=='all'&&!seen[state.filter])state.filter='all';box.innerHTML='<button class=\"filter '+(state.filter==='all'?'active':'')+'\" type=\"button\" data-filter=\"all\">All</button>'+cats.map(function(c){return '<button class=\"filter '+(state.filter===c.key?'active':'')+'\" type=\"button\" data-filter=\"'+escapeHtml(c.key)+'\">'+escapeHtml(c.name)+'</button>'}).join('')}\nfunction loadCatalog(){request(STORE,'catalog',{timeout:9000}).then(function(d){state.catalog=(d.items||[]).map(mapPrompt);if(!state.catalog.length)state.catalog=fallback;renderCategoryFilters();renderPrompts()}).catch(function(){state.catalog=fallback;renderCategoryFilters();renderPrompts()})}\nfunction filtered(){var input=$('#searchInput');var q=((input&&input.value)||'').toLowerCase().trim();return state.catalog.filter(function(p){return(state.filter==='all'||categoryKey(p.category)===state.filter)&&(!q||(p.title+' '+p.creator+' '+p.model+' '+p.category).toLowerCase().indexOf(q)>=0)})}"
+          if old not in s:
+              raise SystemExit('Target loadCatalog/filter block not found')
+          s = s.replace(old, new, 1)
+          app.write_text(s, encoding='utf-8')
+
+          idx = Path('index.html')
+          h = idx.read_text(encoding='utf-8')
+          import re
+          h2, n = re.subn(r'<div class="filters" id="promptFilters">.*?</div>', '<div class="filters" id="promptFilters"><button class="filter active" type="button" data-filter="all">All</button></div>', h, count=1, flags=re.S)
+          if n != 1:
+              raise SystemExit('promptFilters block not found in index.html')
+          idx.write_text(h2, encoding='utf-8')
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Use Admin categories as marketplace filters"
+          git push
