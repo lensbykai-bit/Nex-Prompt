@@ -1,5 +1,6 @@
 const SUPABASE_URL='https://kbanmyaqodtfoqikzwou.supabase.co';
 const SUPABASE_PUBLISHABLE='sb_publishable_7iqItoUm3UU8Vn24VZvC7Q_0AoTUrzo';
+const CHAT_ACCESS=SUPABASE_URL+'/functions/v1/chat-access';
 const MODELS=['minimax/minimax-m2.7-free','poolside/laguna-s-2.1-free'];
 
 function json(res,status,data){
@@ -24,6 +25,24 @@ async function validUser(auth){
     });
     return r.ok;
   }catch{return false;}
+}
+
+async function accessCall(auth,action){
+  try{
+    const r=await fetch(CHAT_ACCESS+'?action='+encodeURIComponent(action),{
+      method:'POST',
+      headers:{
+        Authorization:auth,
+        apikey:SUPABASE_PUBLISHABLE,
+        'Content-Type':'application/json'
+      },
+      body:'{}'
+    });
+    const d=await r.json().catch(()=>({}));
+    return {ok:r.ok,status:r.status,data:d};
+  }catch{
+    return {ok:false,status:503,data:{error:'Chat access service is temporarily unavailable.'}};
+  }
 }
 
 async function callGateway(model,messages){
@@ -54,15 +73,27 @@ async function callGateway(model,messages){
 
 export default async function handler(req,res){
   if(req.method!=='POST') return json(res,405,{error:'Method not allowed'});
-  if(!(await validUser(req.headers.authorization||''))) return json(res,401,{error:'Unauthorized'});
+  const auth=req.headers.authorization||'';
+  if(!(await validUser(auth))) return json(res,401,{error:'Unauthorized'});
   const messages=cleanMessages(req.body && req.body.messages);
   if(!messages.length) return json(res,400,{error:'Please enter a message.'});
+
+  const access=await accessCall(auth,'authorize');
+  if(!access.ok){
+    const d=access.data||{};
+    return json(res,access.status||402,{
+      error:d.error||'AI Chat access is unavailable.',
+      code:d.code||((access.status===429)?'DAILY_LIMIT_REACHED':'SUBSCRIPTION_REQUIRED'),
+      access:d
+    });
+  }
 
   let lastError='AI service is temporarily unavailable.';
   for(const model of MODELS){
     try{
       const out=await callGateway(model,messages);
-      return json(res,200,{ok:true,text:out.text,free:true,cost:0,model:out.model});
+      accessCall(auth,'record').catch(()=>{});
+      return json(res,200,{ok:true,text:out.text,cost:0,model:out.model,access:access.data});
     }catch(e){lastError=String(e && e.message || lastError);}
   }
   console.error('AI Chat gateway failure:',lastError);
