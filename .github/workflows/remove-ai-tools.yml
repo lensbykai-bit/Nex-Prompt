@@ -21,6 +21,7 @@ jobs:
           s=s.replace('<meta name="description" content="NEXORA Ai prompt marketplace and AI tools for creators.">','<meta name="description" content="NEXORA Ai prompt marketplace for creators.">')
           s=s.replace('<a href="#tools" data-route="tools" data-t="AI Tools">AI Tools</a>\n','')
           s=s.replace('<a class="home-card" href="#tools" data-route="tools"><div class="icon">✦</div><h3>AI Tools Workspace</h3><p>One member account for AI Image, Video, Voice and Dubbing.</p><span class="link-pink">Open tools →</span></a>\n','')
+          s=s.replace('<div class="stat"><strong>AI</strong><span>Tools</span></div>','<div class="stat"><strong>7 DAYS</strong><span>Access</span></div>')
           s=s.replace('<p class="section-lead">Start with prompts, create one account, and use NEXORA Ai Tools from one workspace.</p>','<p class="section-lead">Choose a Prompt, purchase securely, and access it from My Prompts.</p>')
           s=s.replace('<p>Browse Prompt or select an AI Tool.</p>','<p>Browse and choose the Prompt you want.</p>')
           s=s.replace('<p>Use your purchased prompt and creator tools.</p>','<p>Open your purchased Prompt from My Prompts.</p>')
