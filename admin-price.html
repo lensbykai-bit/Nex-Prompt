@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080712">
+<title>Nex Prompt — Prompt Price Manager</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,"Noto Sans Khmer",system-ui,sans-serif;background:#080712;color:#f8f3f8;min-height:100vh}button,input{font:inherit}button{cursor:pointer}.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;padding:16px 24px;background:#090713f5;border-bottom:1px solid #2d1b31}.brand{font-size:22px;font-weight:900}.brand b{color:#ff69b3}.back{margin-left:auto;color:#ff79bc;text-decoration:none;border:1px solid #56304e;border-radius:12px;padding:9px 13px}.wrap{max-width:1180px;margin:0 auto;padding:38px 22px 70px}.eyebrow{color:#ff69b3;font-size:11px;font-weight:900;letter-spacing:.08em}.head{display:flex;align-items:end;gap:20px;justify-content:space-between;margin:10px 0 24px}.head h1{font-size:38px;margin:8px 0}.head p{margin:0;color:#aa9fac}.search{width:min(360px,100%);height:44px;border:1px solid #3f2942;border-radius:13px;background:#100c18;color:#fff;padding:0 14px;outline:none}.notice{display:none;padding:13px 15px;border-radius:13px;margin-bottom:18px;font-size:13px;line-height:1.6}.notice.show{display:block}.notice.ok{background:#10291a;color:#9be5b8;border:1px solid #27593a}.notice.err{background:#35131e;color:#ff9db8;border:1px solid #67283c}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.card{overflow:hidden;border:1px solid #342138;border-radius:18px;background:linear-gradient(145deg,#110d19,#17101f)}.img{height:170px;background:#18121f center/cover no-repeat}.body{padding:16px}.title{font-size:16px;font-weight:850;margin-bottom:6px}.meta{color:#9f94a2;font-size:11px;min-height:18px}.price-row{display:flex;align-items:end;gap:9px;margin-top:15px}.price-field{flex:1}.price-field span{display:block;color:#a99eac;font-size:10px;margin-bottom:5px}.price-wrap{position:relative}.price-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-style:normal;color:#ff69b3;font-weight:900}.price-wrap input{width:100%;height:44px;border:1px solid #56304e;border-radius:12px;background:#09070e;color:#fff;padding:0 12px 0 29px;outline:none;font-weight:850}.save{height:44px;padding:0 17px;border:0;border-radius:12px;background:linear-gradient(135deg,#ff2d91,#a855f7);color:#fff;font-weight:900}.save:disabled{opacity:.55;cursor:not-allowed}.badge{display:inline-flex;margin-top:9px;padding:5px 8px;border:1px solid #633052;border-radius:999px;color:#ff80bd;font-size:9px}.empty{grid-column:1/-1;text-align:center;padding:50px 20px;border:1px dashed #443047;border-radius:18px;color:#9d92a0}.login-box{max-width:520px;margin:60px auto;padding:28px;border:1px solid #4b2948;border-radius:20px;background:#100c18;text-align:center}.login-box h2{margin-top:0}.login-box p{color:#aaa0ac;line-height:1.7}.login-box a{display:inline-flex;margin-top:8px;padding:12px 18px;border-radius:12px;background:linear-gradient(135deg,#ff2d91,#a855f7);color:#fff;text-decoration:none;font-weight:900}@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}.head{display:block}.search{margin-top:16px}}@media(max-width:560px){.grid{grid-template-columns:1fr}.wrap{padding:28px 14px 55px}.top{padding:13px 15px}.head h1{font-size:30px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand">Nex <b>Prompt</b></div><span style="color:#9e93a1;font-size:12px">Admin · Price Manager</span><a class="back" href="/">← ទៅ Nex Prompt</a></header>
+<main class="wrap">
+<div class="eyebrow">PROMPT ADMIN</div>
+<div class="head"><div><h1>កែតម្លៃ Prompt</h1><p>កែតម្លៃ Prompt ហើយ Save ទៅ Supabase ដោយផ្ទាល់។</p></div><input class="search" id="search" type="search" placeholder="ស្វែងរក Prompt..."></div>
+<div class="notice" id="notice"></div>
+<div id="content"><div class="empty">កំពុងទាញ Prompt...</div></div>
+</main>
+<script>
+(function(){
+'use strict';
+var API='https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/admin-prompts';
+var STORE='https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/store-api';
+var session=null,items=[];
+function $(s){return document.querySelector(s)}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function getSession(){try{return JSON.parse(localStorage.getItem('nex_cloud_session')||'null')}catch(e){return null}}
+function notice(msg,type){var n=$('#notice');n.textContent=msg;n.className='notice show '+(type||'ok');setTimeout(function(){n.className='notice'},3200)}
+function req(action,opt){opt=opt||{};return fetch(API+'?action='+encodeURIComponent(action),{method:opt.method||'GET',headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},body:opt.body?JSON.stringify(opt.body):undefined}).then(function(r){return r.json().then(function(d){if(!r.ok)throw new Error(d.error||'Request failed');return d})})}
+function render(){var q=($('#search').value||'').trim().toLowerCase();var list=items.filter(function(p){return !q||(p.title+' '+(p.category||'')+' '+(p.creator||'')).toLowerCase().indexOf(q)>=0});var root=$('#content');if(!list.length){root.innerHTML='<div class="empty">រកមិនឃើញ Prompt ទេ។</div>';return}root.innerHTML='<div class="grid">'+list.map(function(p){return '<article class="card" data-id="'+esc(p.id)+'"><div class="img" style="background-image:url(&quot;'+esc(p.image_url||'')+'&quot;)"></div><div class="body"><div class="title">'+esc(p.title)+'</div><div class="meta">'+esc(p.category||'')+' · '+esc(p.creator||'Nex Prompt')+'</div><span class="badge">ID '+esc(p.id)+'</span><div class="price-row"><label class="price-field"><span>តម្លៃ / Price (USD)</span><div class="price-wrap"><i>$</i><input type="number" min="0.10" max="9999" step="0.01" value="'+Number(p.price||0).toFixed(2)+'" data-price></div></label><button class="save" type="button" data-save>Save</button></div></div></article>'}).join('')+'</div>'}
+function load(){req('list').then(function(d){items=d.items||[];render()}).catch(function(e){if(/admin access/i.test(e.message))showLogin('គណនីនេះមិនមែន Admin ទេ។');else showLogin(e.message)})}
+function showLogin(msg){$('#content').innerHTML='<div class="login-box"><h2>ត្រូវចូលគណនី Admin</h2><p>'+esc(msg||'សូមចូលគណនី Admin នៅ Nex Prompt ជាមុន។')+'</p><a href="/">ចូលគណនី Nex Prompt</a></div>'}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-save]');if(!b)return;var card=b.closest('[data-id]'),id=Number(card.getAttribute('data-id')),input=card.querySelector('[data-price]'),price=Number(input.value);if(!isFinite(price)||price<0.1){notice('សូមដាក់តម្លៃត្រឹមត្រូវ។','err');return}b.disabled=true;b.textContent='Saving...';req('price',{method:'POST',body:{id:id,price:price}}).then(function(d){var found=items.find(function(x){return Number(x.id)===id});if(found)found.price=d.item.price;input.value=Number(d.item.price).toFixed(2);notice('បានកែតម្លៃ Prompt ជោគជ័យ ✓','ok')}).catch(function(err){notice(err.message,'err')}).finally(function(){b.disabled=false;b.textContent='Save'})});
+$('#search').addEventListener('input',render);
+session=getSession();if(!session||!session.access_token)showLogin('សូម Sign in ជាមួយគណនី Admin មុន។');else fetch(STORE+'?action=me',{headers:{Authorization:'Bearer '+session.access_token}}).then(function(r){return r.json()}).then(function(d){if(d.profile&&d.profile.role==='admin')load();else showLogin('គណនីនេះមិនមានសិទ្ធិ Admin ទេ។')}).catch(function(){showLogin('Session ផុតកំណត់។ សូម Sign in ម្តងទៀត។')});
+})();
+</script>
+</body>
+</html>
