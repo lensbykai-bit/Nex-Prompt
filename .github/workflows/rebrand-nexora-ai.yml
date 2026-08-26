@@ -25,9 +25,6 @@ jobs:
           files = []
           for pattern in ('*.html', '*.css', '*.js'):
               files.extend(Path('.').glob(pattern))
-          pages_workflow = Path('.github/workflows/pages.yml')
-          if pages_workflow.exists():
-              files.append(pages_workflow)
 
           replacements = [
               ('%C2%A9 Nex Prompt %E2%80%A2 Rafy Bo', '%C2%A9%20NEXORA%20Ai'),
@@ -70,6 +67,6 @@ jobs:
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add '*.html' '*.css' '*.js' .github/workflows/pages.yml
+          git add '*.html' '*.css' '*.js'
           git commit -m "Polish NEXORA Ai branding"
           git push
