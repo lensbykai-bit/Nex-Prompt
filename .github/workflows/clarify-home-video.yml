@@ -1,0 +1,46 @@
+name: Clarify HOME video showcase
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/clarify-home-video.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch-home:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Improve HOME video display
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          if 'video-clear.css' not in s:
+              s = s.replace(
+                  '<link rel="stylesheet" href="sales.css?v=20260827-video-showcase">',
+                  '<link rel="stylesheet" href="sales.css?v=20260827-video-showcase">\n<link rel="stylesheet" href="video-clear.css?v=20260827-clear2">'
+              )
+          s = s.replace(
+              'class="showcase-video" autoplay muted loop playsinline preload="metadata"',
+              'class="showcase-video" autoplay muted loop playsinline controls preload="auto" controlslist="nodownload noplaybackrate"'
+          )
+          s = s.replace('video-01.mp4?v=1', 'video-01.mp4?v=clear2')
+          s = s.replace('video-02.mp4?v=1', 'video-02.mp4?v=clear2')
+          s = s.replace('video-03.mp4?v=1', 'video-03.mp4?v=clear2')
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if ! git diff --cached --quiet; then
+            git commit -m "Make HOME videos larger and clearer"
+            git push
+          fi
