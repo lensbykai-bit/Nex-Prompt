@@ -1,0 +1,1 @@
+Trigger Vercel deploy after HOME video clarity patch.
