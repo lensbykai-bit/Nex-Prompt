@@ -1,4 +1,4 @@
-name: Fix NEXORA Ai header logo final
+name: Restore original NEXORA Ai logo
 on:
   push:
     paths:
@@ -6,23 +6,31 @@ on:
 permissions:
   contents: write
 jobs:
-  fix-logo:
+  restore-logo:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Switch header to verified logo asset
+      - name: Restore original SVG logo
         run: |
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          s=s.replace('assets/nexora-ai-logo-header-v4.webp?v=20260827','assets/nexora-ai-logo-header-v2.webp?v=20260827-final')
+          import re
+          s=re.sub(r'assets/nexora-ai-logo-header-v2\.webp\?v=20260827-final','assets/nexora-ai-logo.svg?v=20260827-original',s)
+          s=re.sub(r'assets/nexora-ai-logo-header-v4\.webp\?v=20260827','assets/nexora-ai-logo.svg?v=20260827-original',s)
+          s=re.sub(r'assets/nexora-ai-logo-header\.webp(?:\?[^"\']*)?','assets/nexora-ai-logo.svg?v=20260827-original',s)
           p.write_text(s,encoding='utf-8')
+
+          cssp=Path('sales.css')
+          css=cssp.read_text(encoding='utf-8')
+          css += '\n/* Original NEXORA Ai logo restored */\n.brand{width:225px;height:66px;flex:0 0 225px;display:flex;align-items:center;overflow:visible;background:none!important}\n.brand .brand-logo{display:block!important;width:100%!important;height:auto!important;max-height:62px!important;object-fit:contain!important;object-position:left center!important;opacity:1!important;visibility:visible!important}\n@media(max-width:900px){.brand{width:185px;height:56px;flex-basis:185px}.brand .brand-logo{max-height:52px!important}}\n@media(max-width:560px){.brand{width:150px;height:48px;flex-basis:150px}.brand .brand-logo{max-height:44px!important}}\n'
+          cssp.write_text(css,encoding='utf-8')
           PY
-      - name: Commit fix
+      - name: Commit restoration
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git diff --cached --quiet || git commit -m "Use verified visible NEXORA Ai logo"
+          git add index.html sales.css
+          git diff --cached --quiet || git commit -m "Restore original NEXORA Ai header logo"
           git push
