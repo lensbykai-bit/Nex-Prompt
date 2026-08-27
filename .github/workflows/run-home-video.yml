@@ -1,0 +1,21 @@
+name: Run HOME video showcase patch
+on:
+  push:
+    paths:
+      - '.github/scripts/patch_home_video.py'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch HOME showcase
+        run: python .github/scripts/patch_home_video.py
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html sales.css
+          git diff --cached --quiet || git commit -m "Add premium HOME video showcase"
+          git push
