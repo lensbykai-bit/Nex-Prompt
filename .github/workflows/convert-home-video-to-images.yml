@@ -10,13 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Convert preview videos to JPG and update HOME
+      - name: Replace HOME videos with static images
         run: |
           set -e
-          mkdir -p assets/home-images
-          for i in 01 02 03; do
-            ffmpeg -y -ss 0.15 -i "assets/home-videos/video-$i.mp4" -frames:v 1 -vf "scale=540:-2" -q:v 3 "assets/home-images/image-$i.jpg"
-          done
           python - <<'PY'
           from pathlib import Path
           p=Path('index.html')
@@ -43,10 +39,10 @@ jobs:
             css += extra
           c.write_text(css,encoding='utf-8')
           PY
-      - name: Commit image previews
+      - name: Commit image preview layout
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html video-clear.css assets/home-images
+          git add index.html video-clear.css
           git diff --cached --quiet || git commit -m "Replace HOME videos with image previews"
           git push
