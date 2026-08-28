@@ -1,0 +1,52 @@
+name: Convert HOME previews to images
+on:
+  push:
+    paths:
+      - '.github/home-image-trigger.txt'
+permissions:
+  contents: write
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Convert preview videos to JPG and update HOME
+        run: |
+          set -e
+          mkdir -p assets/home-images
+          for i in 01 02 03; do
+            ffmpeg -y -ss 0.15 -i "assets/home-videos/video-$i.mp4" -frames:v 1 -vf "scale=540:-2" -q:v 3 "assets/home-images/image-$i.jpg"
+          done
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          replacements={
+            '<video class="showcase-video" autoplay muted loop playsinline controls preload="auto" controlslist="nodownload noplaybackrate" aria-label="NEXORA Ai creative video preview 1"><source src="assets/home-videos/video-01.mp4?v=clear2" type="video/mp4"></video>':'<img class="showcase-video showcase-image" src="assets/home-images/image-01.jpg?v=20260828" alt="NEXORA Ai creative preview 1" loading="lazy">',
+            '<video class="showcase-video" autoplay muted loop playsinline controls preload="auto" controlslist="nodownload noplaybackrate" aria-label="NEXORA Ai creative video preview 2"><source src="assets/home-videos/video-02.mp4?v=clear2" type="video/mp4"></video>':'<img class="showcase-video showcase-image" src="assets/home-images/image-02.jpg?v=20260828" alt="NEXORA Ai creative preview 2" loading="lazy">',
+            '<video class="showcase-video" autoplay muted loop playsinline controls preload="auto" controlslist="nodownload noplaybackrate" aria-label="NEXORA Ai creative video preview 3"><source src="assets/home-videos/video-03.mp4?v=clear2" type="video/mp4"></video>':'<img class="showcase-video showcase-image" src="assets/home-images/image-03.jpg?v=20260828" alt="NEXORA Ai creative preview 3" loading="lazy">',
+          }
+          for old,new in replacements.items():
+            s=s.replace(old,new)
+          s=s.replace('✦ VIDEO SHOWCASE','✦ CREATIVE SHOWCASE')
+          s=s.replace('See your ideas in motion','Creative preview gallery')
+          s=s.replace('Short creative previews made for scroll-stopping inspiration. Pick a style you love, then explore the Prompt marketplace.','Browse clean visual previews, choose the style you like, then explore the Prompt marketplace.')
+          s=s.replace('◉ 9:16 ready','◉ 9:16 preview')
+          s=s.replace('⚡ Lightweight preview','⚡ Fast-loading images')
+          s=s.replace('video-clear.css?v=20260827-clear2','video-clear.css?v=20260828-images')
+          p.write_text(s,encoding='utf-8')
+
+          c=Path('video-clear.css')
+          css=c.read_text(encoding='utf-8')
+          extra='''\n/* Static image previews */\n.showcase-image{display:block;width:100%;height:100%;object-fit:cover!important;object-position:center!important;background:#030205;user-select:none;-webkit-user-drag:none}\n.motion-frame{overflow:hidden}\n.motion-frame:hover .showcase-image{transform:scale(1.025)!important;transition:transform .35s ease}\n@media(max-width:720px){.motion-frame:hover .showcase-image{transform:none!important}}\n'''
+          if '/* Static image previews */' not in css:
+            css += extra
+          c.write_text(css,encoding='utf-8')
+          PY
+      - name: Commit image previews
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html video-clear.css assets/home-images
+          git diff --cached --quiet || git commit -m "Replace HOME videos with image previews"
+          git push
